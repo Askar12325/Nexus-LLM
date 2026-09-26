@@ -119,6 +119,7 @@ func (cb *CircuitBreaker) TripManually() {
 	cb.mu.Lock()
 	defer cb.mu.Unlock()
 	cb.state = StateOpen
+	cb.consecutiveFails = cb.cfg.FailureThreshold
 	cb.lastStateChange = time.Now()
 	cb.totalTrips++
 }

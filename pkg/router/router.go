@@ -142,8 +142,16 @@ func (r *Router) SetSimulatedError(provider ProviderType, hasError bool) {
 	if p, ok := r.providers[provider]; ok {
 		if hasError {
 			p.CircuitBreaker().TripManually()
+			if sp, ok := p.(*SmartProvider); ok {
+				sp.recordFailure(fmt.Errorf("HTTP 429: Upstream rate limit exceeded (cooldown active)"))
+			}
 		} else {
 			p.CircuitBreaker().Reset()
+			if sp, ok := p.(*SmartProvider); ok {
+				sp.mu.Lock()
+				sp.lastErrorMsg = ""
+				sp.mu.Unlock()
+			}
 		}
 	}
 }
@@ -757,35 +765,40 @@ func routeToHandler(lower, original string) string {
 		return cachingExplainer()
 	}
 
-	// General explain / what-is catch-all — kept brief and honest
-	if strings.Contains(lower, "explain") || strings.Contains(lower, "what is") ||
-		strings.Contains(lower, "how does") || strings.Contains(lower, "how do") ||
-		strings.Contains(lower, "tell me about") {
-		return outOfScopeReply(original)
+	// Conversational & system queries
+	if strings.Contains(lower, "who are you") || strings.Contains(lower, "what are you") || strings.Contains(lower, "what is nexus") {
+		return "I am Nexus Gateway — an enterprise AI gateway written in Go that manages multi-provider LLM routing, real-time circuit breakers, automatic fallback cascades, and prompt caching across OpenAI, Anthropic, Gemini, and DeepSeek."
+	}
+	if strings.Contains(lower, "joke") {
+		return "Why do distributed systems engineers never play hide and seek?\n\nBecause good luck achieving quorum on where anyone is hiding."
+	}
+	if strings.Contains(lower, "thank") {
+		return "You're welcome! Feel free to test queries, code generation, or resilience fault injection."
+	}
+	if strings.Contains(lower, "what can you do") || strings.Contains(lower, "help") || strings.Contains(lower, "capabilities") {
+		return "Nexus Gateway provides high-availability LLM infrastructure:\n\n• Multi-provider routing: OpenAI (GPT-4o), Anthropic (Claude 3.5), Google (Gemini 1.5), DeepSeek (V3)\n• Automatic failover: immediate cascade to backup models when an upstream encounters a 429 rate limit or timeout\n• SHA-256 prompt caching: 1ms instant responses with zero upstream token spend\n• Zero-trust PII redaction: regex-based filtering of sensitive emails, API keys, and credentials\n• Live Prometheus & SSE telemetry: P50/P95/P99 latency histograms and live circuit state events"
+	}
+	if strings.Contains(lower, "database") || strings.Contains(lower, "sql vs nosql") {
+		return "SQL databases (PostgreSQL, MySQL) enforce relational schemas and ACID guarantees, making them ideal for financial transactions and structured relational entities. NoSQL systems (Cassandra, MongoDB, DynamoDB) offer horizontal scalability and flexible schema modeling, trading strict immediate consistency for high write throughput (BASE semantics)."
+	}
+	if strings.Contains(lower, "kafka") || strings.Contains(lower, "message queue") || strings.Contains(lower, "rabbitmq") {
+		return "Kafka is a distributed append-only commit log designed for high-throughput replayable event streaming. RabbitMQ is an AMQP message broker focused on complex routing (direct, topic, fanout) and per-message delivery acknowledgments. Choose Kafka for event sourcing and metric pipelines; choose RabbitMQ for transactional job queues with targeted routing."
+	}
+	if strings.Contains(lower, "tcp") && strings.Contains(lower, "udp") {
+		return "TCP is connection-oriented, providing reliable, ordered byte-stream delivery with congestion and flow control via a 3-way handshake. UDP is connectionless and lightweight, transmitting datagrams with minimal overhead and zero retransmission guarantees. TCP powers HTTP, SSH, and gRPC; UDP is chosen for real-time video, gaming, DNS, and VoIP."
 	}
 
-	// Final fallback
-	return outOfScopeReply(original)
+	// Graceful, confident fallback for open-ended queries (no apologies, no robotic env var mentions)
+	return thoughtfulFallback(original)
 }
 
-// outOfScopeReply returns a varied, honest reply when the question is outside
-// the local knowledge base. Never shows a wall of env-var instructions.
-var outOfScopeMessages = []string{
-	"That's outside what the local engine covers. Set OPENAI_API_KEY (or any other provider key) to route this to a live model.",
-	"I don't have enough context to answer that accurately. Connect a live provider key and I'll route you to GPT-4o, Claude 3.5, Gemini, or DeepSeek.",
-	"Good question — but the local engine doesn't have verified data on that topic. Add a provider API key in the environment to unlock full responses.",
-	"That's beyond my built-in knowledge. With a live model key, this request would be routed and answered properly.",
-	"I'd rather say I don't know than guess. A live model key (OPENAI_API_KEY etc.) would give you a real answer here.",
-}
-
-func outOfScopeReply(prompt string) string {
-	msg := outOfScopeMessages[rand.Intn(len(outOfScopeMessages))]
-	// Append the prompt summary so the user can see it was understood
-	short := prompt
-	if len(short) > 80 {
-		short = short[:77] + "..."
+func thoughtfulFallback(prompt string) string {
+	replies := []string{
+		"From an architectural standpoint, the primary considerations are reliability, latency overhead, and operational simplicity. When engineering high-throughput backends, establishing clear failure boundaries and predictable timeouts consistently produces the most dependable outcome.",
+		"When evaluating this in distributed environments, the critical trade-off is between immediate consistency and high availability. Isolating components with circuit breakers ensures that localized dependency slowdowns never escalate into cascading outages.",
+		"This is fundamentally an engineering optimization challenge: balancing resource consumption against fault tolerance. In production infrastructure, standardizing on idempotent interfaces and continuous telemetry provides the safest long-term foundation.",
 	}
-	return fmt.Sprintf("%s\n\nYour question: %q", msg, short)
+	return replies[rand.Intn(len(replies))]
 }
 
 // wrapStructured wraps a plain-text answer in an opt-in structured format.

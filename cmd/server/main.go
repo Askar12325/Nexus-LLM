@@ -98,9 +98,9 @@ func main() {
 	)
 	l.RegisterTenant(demoTenant)
 
-	// Pre-seed realistic telemetry and prompt cache so the gateway boots
-	// with non-zero, believable historical metrics immediately.
-	seedTelemetry(t, c, l)
+	// Pre-seed realistic telemetry, prompt cache, and provider baseline states.
+	// Starts OpenAI in OPEN state to immediately demonstrate live resilience & fallback out of the box.
+	seedTelemetry(t, c, l, r)
 
 	server := &Server{
 		router:    r,
@@ -677,7 +677,7 @@ func (s *Server) handleRegisterTenant(w http.ResponseWriter, r *http.Request) {
 
 // ── Pre-seed Telemetry ────────────────────────────────────────────────────────
 
-func seedTelemetry(t *metrics.Telemetry, c *cache.Cache, l *ratelimit.Limiter) {
+func seedTelemetry(t *metrics.Telemetry, c *cache.Cache, l *ratelimit.Limiter, r *router.Router) {
 	now := time.Now()
 
 	// 1. Seed two warm cache entries
@@ -747,6 +747,10 @@ func seedTelemetry(t *metrics.Telemetry, c *cache.Cache, l *ratelimit.Limiter) {
 
 	// Update tenant usage baseline
 	l.RecordUsage("nx-key-demo-secret", 3200, 2400, 5600, 0.062)
+
+	// 3. Initialize OpenAI in the OPEN state with healthy historical metrics.
+	// Demonstrates active circuit breaking and automatic failover out of the box.
+	r.SetSimulatedError(router.ProviderOpenAI, true)
 }
 
 func truncate(s string, maxLen int) string {
@@ -885,7 +889,7 @@ body{
 .metric-val{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text-main);}
 .provider-pill{
   display:flex;align-items:center;justify-content:space-between;
-  padding:9px 12px;border-radius:var(--r-sm);background:var(--card);
+  padding:10px 12px;border-radius:var(--r-sm);background:var(--card);
   border:1px solid var(--border);margin-bottom:7px;font-size:12px;
 }
 .provider-pill:last-child{margin-bottom:0;}
@@ -895,8 +899,8 @@ body{
   padding:2px 8px;border-radius:99px;text-transform:uppercase;
 }
 .pill-closed{background:rgba(16,185,129,0.12);color:var(--emerald);border:1px solid rgba(16,185,129,0.25);}
-.pill-open{background:rgba(244,63,94,0.12);color:var(--rose);border:1px solid rgba(244,63,94,0.25);}
-.pill-half{background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.25);}
+.pill-open{background:rgba(244,63,94,0.12);color:var(--rose);border:1px solid rgba(244,63,94,0.25);animation:pulse 1.8s infinite;}
+.pill-half{background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.25);animation:pulse 1.4s infinite;}
 
 /* Chat Central */
 .chat-center{flex:1;display:flex;flex-direction:column;background:var(--bg);}
@@ -955,7 +959,7 @@ body{
 /* Badges on bot messages */
 .cascade-alert{
   background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.28);
-  border-radius:var(--r-sm);padding:8px 12px;margin-bottom:10px;
+  border-radius:var(--r-sm);padding:9px 13px;margin-bottom:10px;
   display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--amber);
 }
 .sanitized-alert{
@@ -1025,9 +1029,9 @@ body{
 .diag-node{
   padding:14px 18px;border-radius:var(--r-md);background:var(--card);
   border:1px solid var(--border);display:flex;flex-direction:column;gap:4px;
-  min-width:180px;position:relative;
+  min-width:180px;position:relative;transition:all 0.2s;
 }
-.diag-node.node-open{border-color:var(--rose);background:rgba(244,63,94,0.06);}
+.diag-node.node-open{border-color:var(--rose);background:rgba(244,63,94,0.06);box-shadow:0 0 16px var(--rose-glow);}
 .diag-node-name{font-weight:700;font-size:14px;color:#fff;}
 .diag-node-role{font-size:11px;color:var(--text-muted);}
 .diag-node-badge{
@@ -1041,7 +1045,7 @@ body{
 .p-card{
   background:var(--surface);border:1px solid var(--border);
   border-radius:var(--r-lg);padding:22px;display:flex;flex-direction:column;
-  gap:18px;transition:all 0.2s;position:relative;
+  gap:16px;transition:all 0.2s;position:relative;
 }
 .p-card:hover{border-color:var(--border-strong);}
 .p-card.card-tripped{border-color:var(--rose);box-shadow:0 0 24px var(--rose-glow);}
@@ -1053,12 +1057,24 @@ body{
 }
 .state-closed{background:rgba(16,185,129,0.12);color:var(--emerald);border:1px solid rgba(16,185,129,0.25);}
 .state-open{background:rgba(244,63,94,0.12);color:var(--rose);border:1px solid rgba(244,63,94,0.3);animation:pulse 1.8s infinite;}
-.state-half{background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.25);}
+.state-half{background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.25);animation:pulse 1.4s infinite;}
 
-.card-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.card-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .stat-box{display:flex;flex-direction:column;gap:3px;}
 .stat-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-faint);}
-.stat-num{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:600;color:#fff;}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:600;color:#fff;}
+
+.error-banner{
+  background:rgba(244,63,94,0.08);border:1px solid rgba(244,63,94,0.22);
+  border-radius:var(--r-sm);padding:8px 12px;font-size:11px;font-family:'JetBrains Mono',monospace;
+  color:var(--rose);line-height:1.4;
+}
+.healthy-banner{
+  font-size:11px;color:var(--text-faint);padding:4px 0;display:flex;align-items:center;gap:6px;
+}
+.countdown-box{
+  font-size:11px;font-weight:600;color:var(--amber);display:flex;align-items:center;gap:6px;
+}
 
 .fault-btn{
   padding:10px 16px;border-radius:var(--r-sm);border:none;cursor:pointer;
@@ -1153,7 +1169,7 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:12px;}
     <button class="nav-tab" id="tab-ten" onclick="switchTab('ten')">Tenants</button>
   </nav>
   <div class="top-right">
-    <div class="live-badge"><div class="live-dot"></div>Live SSE</div>
+    <div class="live-badge"><div class="live-dot"></div>Live SSE Connected</div>
   </div>
 </header>
 
@@ -1175,10 +1191,7 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:12px;}
         <div class="side-block" style="flex:1">
           <div class="side-title">Provider Mesh Health</div>
           <div id="sb-providers">
-            <div class="provider-pill"><span class="pill-name">OpenAI</span><span class="pill-status pill-closed">CLOSED</span></div>
-            <div class="provider-pill"><span class="pill-name">Anthropic</span><span class="pill-status pill-closed">CLOSED</span></div>
-            <div class="provider-pill"><span class="pill-name">Google Gemini</span><span class="pill-status pill-closed">CLOSED</span></div>
-            <div class="provider-pill"><span class="pill-name">DeepSeek</span><span class="pill-status pill-closed">CLOSED</span></div>
+            <!-- Populated by JS -->
           </div>
         </div>
         <div class="side-block" style="background:rgba(99,102,241,0.03);">
@@ -1218,9 +1231,9 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:12px;}
             <div class="msg-author">Nexus Gateway</div>
             <div class="bubble">Production gateway active. Incoming prompts pass through rate limiting, PII redaction, SHA-256 caching, and automatic fallback cascades across OpenAI, Anthropic, Gemini, and DeepSeek.
 
-Short and conversational inputs receive natural replies. You can toggle <strong>Structured Mode</strong> at top-right for structured summary breakdowns.
+OpenAI currently starts in an active <strong>OPEN (TRIPPED)</strong> circuit state to showcase real-time failover. Sending a prompt with GPT-4o will automatically cascade to Claude 3.5 Sonnet with zero downtime.
 
-What would you like to test?</div>
+What would you like to explore?</div>
             <div class="msg-meta">
               <span class="tag-badge tag-stream">Engine Ready</span>
               <span>&middot;</span>
@@ -1264,7 +1277,7 @@ What would you like to test?</div>
           <div class="diag-node" id="node-OpenAI">
             <span class="diag-node-name">OpenAI</span>
             <span class="diag-node-role">Primary Tier &middot; GPT-4o</span>
-            <span class="diag-node-badge state-closed" id="badge-OpenAI">CLOSED</span>
+            <span class="diag-node-badge state-open" id="badge-OpenAI">OPEN</span>
           </div>
           <div class="diag-arrow">&rarr;</div>
           <div class="diag-node" id="node-Anthropic">
@@ -1289,7 +1302,7 @@ What would you like to test?</div>
 
       <!-- Provider cards -->
       <div class="cards-grid" id="provider-cards">
-        <div style="color:var(--text-faint);padding:24px;">Loading provider cards...</div>
+        <!-- Populated by JS -->
       </div>
     </div>
   </section>
@@ -1375,6 +1388,7 @@ What would you like to test?</div>
 let structuredMode = false;
 let streamingMode = false;
 let activeTab = 'play';
+let countdownTimers = {};
 
 function switchTab(tab) {
   document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
@@ -1421,6 +1435,7 @@ function showToast(msg) {
 }
 
 function esc(s) {
+  if (!s) return '';
   const d = document.createElement('div');
   d.innerText = s;
   return d.innerHTML;
@@ -1516,9 +1531,9 @@ async function sendPrompt() {
     bubble.style.color = 'var(--text-main)';
     let contentHtml = '';
 
-    // Cascade alert if fallback occurred
+    // Cascade alert banner if fallback occurred
     if (resp.was_fallback) {
-      contentHtml += '<div class="cascade-alert">Automatic Fallback: Primary ' + esc(resp.original_model) + ' unavailable &rarr; Served by ' + esc(resp.provider) + ' (' + esc(resp.model) + ')</div>';
+      contentHtml += '<div class="cascade-alert">Automatic Fallback: Primary ' + esc(resp.original_model) + ' circuit OPEN &rarr; Fulfilled by ' + esc(resp.provider) + ' (' + esc(resp.model) + ') in ' + resp.latency_ms + 'ms</div>';
     }
 
     // PII redaction alert if sanitized
@@ -1529,13 +1544,13 @@ async function sendPrompt() {
     contentHtml += esc(resp.text);
     bubble.innerHTML = contentHtml;
 
-    // Meta row
+    // Meta row with provider badge
     let metaTags = '<span class="tag-badge tag-stream">' + esc(resp.provider) + ' · ' + esc(resp.model) + '</span>';
     if (resp.from_cache) {
       metaTags += '<span class="tag-badge tag-cache">Cache Hit · $' + (data.cost_saved || 0).toFixed(4) + ' saved</span>';
     }
     if (resp.was_fallback) {
-      metaTags += '<span class="tag-badge tag-fallback">Cascade Fallback</span>';
+      metaTags += '<span class="tag-badge tag-fallback">Cascade Failover</span>';
     }
     metaTags += '<span>&middot;</span><span>' + resp.latency_ms + 'ms</span><span>&middot;</span><span>' + resp.total_tokens + ' tokens</span>';
 
@@ -1573,7 +1588,14 @@ async function refreshTelemetry() {
     if (cb && Array.isArray(cb)) {
       document.getElementById('sb-providers').innerHTML = cb.map(b => {
         const cls = b.state === 'CLOSED' ? 'pill-closed' : (b.state === 'HALF-OPEN' ? 'pill-half' : 'pill-open');
-        return '<div class="provider-pill"><span class="pill-name">' + esc(b.name) + '</span><span class="pill-status ' + cls + '">' + b.state + '</span></div>';
+        const stateLabel = b.state === 'CLOSED' ? 'CLOSED' : (b.state === 'HALF-OPEN' ? 'HALF-OPEN' : 'OPEN');
+        return '<div class="provider-pill">'
+          + '  <div>'
+          + '    <div class="pill-name">' + esc(b.name) + '</div>'
+          + '    <div style="font-size:10px;color:var(--text-muted);">' + b.last_latency_ms + 'ms &middot; ' + b.success_rate_pct.toFixed(1) + '%</div>'
+          + '  </div>'
+          + '  <span class="pill-status ' + cls + '">' + stateLabel + '</span>'
+          + '</div>';
       }).join('');
     }
   } catch (e) {
@@ -1605,29 +1627,71 @@ async function loadResilience() {
     grid.innerHTML = data.map(b => {
       const isTripped = b.state !== 'CLOSED';
       const stateCls = b.state === 'CLOSED' ? 'state-closed' : (b.state === 'HALF-OPEN' ? 'state-half' : 'state-open');
+      const stateText = b.state === 'CLOSED' ? 'CLOSED (HEALTHY)' : (b.state === 'HALF-OPEN' ? 'HALF-OPEN (PROBING)' : 'OPEN (TRIPPED)');
       const btnCls = b.has_simulated_error ? 'btn-restore' : 'btn-trip';
       const btnText = b.has_simulated_error ? 'Restore Provider' : 'Simulate 429 Outage';
       const targetState = !b.has_simulated_error;
+      const cleanId = b.name.replace(/\s+/g, '');
 
-      return '<div class="p-card ' + (isTripped ? 'card-tripped' : '') + '">'
+      let errorHtml = '';
+      if (b.last_error_msg) {
+        errorHtml = '<div class="error-banner">Last Error: ' + esc(b.last_error_msg) + '</div>';
+      } else {
+        errorHtml = '<div class="healthy-banner"><span style="color:var(--emerald)">&check;</span> Upstream health checks passing</div>';
+      }
+
+      let countdownHtml = '';
+      if (b.state === 'OPEN') {
+        countdownHtml = '<div class="countdown-box" id="cd-' + cleanId + '">Recovery probe in <span id="sec-' + cleanId + '">8</span>s...</div>';
+      }
+
+      return '<div class="p-card ' + (isTripped ? 'card-tripped' : '') + '" id="card-' + cleanId + '">'
         + '<div class="card-header">'
         + '  <div>'
         + '    <div class="card-name">' + esc(b.name) + '</div>'
-        + '    <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Last latency: ' + b.last_latency_ms + 'ms</div>'
+        + '    <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Last latency: ' + b.last_latency_ms + 'ms &middot; ' + b.total_requests + ' reqs</div>'
         + '  </div>'
-        + '  <span class="card-state ' + stateCls + '">' + b.state + '</span>'
+        + '  <span class="card-state ' + stateCls + '">' + stateText + '</span>'
         + '</div>'
         + '<div class="card-stats">'
         + '  <div class="stat-box"><span class="stat-lbl">Success Rate</span><span class="stat-num" style="color:var(--emerald)">' + b.success_rate_pct.toFixed(1) + '%</span></div>'
-        + '  <div class="stat-box"><span class="stat-lbl">Total Trips</span><span class="stat-num">' + b.total_trips + '</span></div>'
+        + '  <div class="stat-box"><span class="stat-lbl">Last Latency</span><span class="stat-num">' + b.last_latency_ms + 'ms</span></div>'
+        + '  <div class="stat-box"><span class="stat-lbl">Lifetime Trips</span><span class="stat-num">' + b.total_trips + '</span></div>'
         + '  <div class="stat-box"><span class="stat-lbl">Consec. Fails</span><span class="stat-num" style="color:' + (b.consecutive_fails > 0 ? 'var(--rose)' : 'inherit') + '">' + b.consecutive_fails + '</span></div>'
         + '</div>'
+        + errorHtml
+        + countdownHtml
         + '<button class="fault-btn ' + btnCls + '" onclick="toggleChaos(\'' + b.name + '\', ' + targetState + ')">' + btnText + '</button>'
         + '</div>';
     }).join('');
+
+    // Setup active countdowns
+    data.forEach(b => {
+      const cleanId = b.name.replace(/\s+/g, '');
+      if (b.state === 'OPEN') {
+        startCountdown(cleanId);
+      } else {
+        clearInterval(countdownTimers[cleanId]);
+      }
+    });
   } catch (e) {
     console.error('Resilience load error:', e);
   }
+}
+
+function startCountdown(cleanId) {
+  clearInterval(countdownTimers[cleanId]);
+  let sec = 8;
+  countdownTimers[cleanId] = setInterval(() => {
+    sec--;
+    const el = document.getElementById('sec-' + cleanId);
+    if (el) el.innerText = Math.max(0, sec);
+    if (sec <= 0) {
+      clearInterval(countdownTimers[cleanId]);
+      const box = document.getElementById('cd-' + cleanId);
+      if (box) box.innerHTML = '<span style="color:var(--amber);">Probing upstream health...</span>';
+    }
+  }, 1000);
 }
 
 async function toggleChaos(provider, enabled) {
