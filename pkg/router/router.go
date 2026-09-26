@@ -600,13 +600,12 @@ func generateIntelligentResponse(provider ProviderType, model, prompt string, st
 	lower := strings.ToLower(strings.TrimSpace(prompt))
 	trimmed := strings.TrimSpace(prompt)
 
-	// ── 1. Empty or very short / ambiguous inputs ─────────────────────────────
+	// ── 1. Empty or ambiguous greeting inputs ─────────────────────────────
 	// Constraint 1: never force structure on short inputs.
-	wordCount := len(strings.Fields(trimmed))
-	if wordCount == 0 || trimmed == "" {
+	if trimmed == "" {
 		return "Go ahead — type anything and I'll do my best to help."
 	}
-	if wordCount <= 2 || isAmbiguousGreeting(lower) {
+	if isAmbiguousGreeting(lower) {
 		return shortReply(lower, model)
 	}
 
@@ -631,7 +630,7 @@ func isAmbiguousGreeting(lower string) bool {
 		"ping", "hello?", "hey there", "greetings",
 	}
 	for _, p := range phrases {
-		if lower == p || strings.HasPrefix(lower, p+" ") {
+		if lower == p || lower == p+"!" || lower == p+"." || lower == p+"?" || strings.HasPrefix(lower, p+" ") {
 			return true
 		}
 	}
@@ -639,45 +638,65 @@ func isAmbiguousGreeting(lower string) bool {
 }
 
 // shortReply returns a concise, natural response for greetings and short inputs.
-// Varied so repeated hellos don't feel robotic.
 func shortReply(lower, model string) string {
-	hour := time.Now().Hour()
-	timeOfDay := "Hey"
-	if hour < 12 {
-		timeOfDay = "Morning"
-	} else if hour < 17 {
-		timeOfDay = "Hey"
-	} else {
-		timeOfDay = "Evening"
-	}
-
 	replies := []string{
-		timeOfDay + " — what do you want to explore?",
-		"What can I help you with?",
-		"Ready when you are. What's on your mind?",
-		"What would you like to know?",
-		"Ask me anything — I'll give you a straight answer.",
+		"Hello! How can I help you today?",
+		"Hey there! What's on your mind?",
+		"Hi! What would you like to explore?",
+		"Hello! Ready when you are, what can I do for you?",
+		"Hey! Feel free to ask anything.",
 	}
-
-	_ = lower // could be used for more granular routing
-	_ = model
 	return replies[rand.Intn(len(replies))]
 }
 
-// routeToHandler dispatches to the correct topic handler. Returns empty string
-// if nothing matched (caller handles the fallback).
+// routeToHandler dispatches to the correct topic handler based on user intent.
 func routeToHandler(lower, original string) string {
 	// Math — try first, fast path
 	if result, ok := solveSimpleMath(original); ok {
 		return result
 	}
 
-	// Capitals
+	// Creative writing & personal expression
+	if strings.Contains(lower, "love letter") ||
+		(strings.Contains(lower, "love") && (strings.Contains(lower, "letter") || strings.Contains(lower, "note") || strings.Contains(lower, "message") || strings.Contains(lower, "write"))) {
+		return generateLoveLetter(original)
+	}
+	if strings.Contains(lower, "poem") || strings.Contains(lower, "poetry") || strings.Contains(lower, "haiku") || strings.Contains(lower, "rhyme") {
+		return generatePoem(original)
+	}
+	if strings.Contains(lower, "story") || strings.Contains(lower, "tale") {
+		return generateStory(original)
+	}
+	if strings.Contains(lower, "email") || strings.Contains(lower, "letter") || strings.Contains(lower, "draft") || strings.Contains(lower, "resignation") || strings.Contains(lower, "cover letter") {
+		return generateContextualEmail(original)
+	}
+
+	// Casual, humor & lifestyle
+	if strings.Contains(lower, "joke") || strings.Contains(lower, "funny") {
+		return generateJoke()
+	}
+	if strings.Contains(lower, "recipe") || strings.Contains(lower, "cook") || strings.Contains(lower, "bake") || strings.Contains(lower, "cake") {
+		return generateRecipe(original)
+	}
+	if strings.Contains(lower, "advice") || strings.Contains(lower, "how do i make friends") || strings.Contains(lower, "how to be happy") {
+		return generateAdvice(original)
+	}
+
+	// Gateway Identity & capabilities
+	if strings.Contains(lower, "who are you") || strings.Contains(lower, "what are you") || strings.Contains(lower, "what is nexus") {
+		return "I am Nexus Gateway — an enterprise AI gateway written in Go that manages multi-provider LLM routing, real-time circuit breakers, automatic fallback cascades, and prompt caching across OpenAI, Anthropic, Gemini, and DeepSeek."
+	}
+	if strings.Contains(lower, "thank") {
+		return "You're welcome! Let me know if you need anything else."
+	}
+	if strings.Contains(lower, "what can you do") || strings.Contains(lower, "help") || strings.Contains(lower, "capabilities") {
+		return "Nexus Gateway provides high-availability LLM infrastructure:\n\n• Multi-provider routing: OpenAI (GPT-4o), Anthropic (Claude 3.5), Google (Gemini 1.5), DeepSeek (V3)\n• Automatic failover: immediate cascade to backup models when an upstream encounters a 429 rate limit or timeout\n• SHA-256 prompt caching: 1ms instant responses with zero upstream token spend\n• Zero-trust PII redaction: regex-based filtering of sensitive emails, API keys, and credentials\n• Live Prometheus & SSE telemetry: P50/P95/P99 latency histograms and live circuit state events"
+	}
+
+	// Geography, Astronomy & Sports
 	if strings.Contains(lower, "capital") {
 		return getCapitalAnswer(lower)
 	}
-
-	// Planets
 	if strings.Contains(lower, "largest planet") {
 		return "Jupiter. It's about 11 times wider than Earth with a diameter of 142,984 km — a gas giant made mostly of hydrogen and helium, with at least 95 known moons."
 	}
@@ -687,8 +706,6 @@ func routeToHandler(lower, original string) string {
 	if strings.Contains(lower, "planet") && strings.Contains(lower, "how many") {
 		return "Eight, officially: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune. Pluto was reclassified as a dwarf planet in 2006 by the IAU."
 	}
-
-	// Sports
 	if strings.Contains(lower, "messi") && strings.Contains(lower, "ronaldo") {
 		return messiVsRonaldo()
 	}
@@ -696,15 +713,17 @@ func routeToHandler(lower, original string) string {
 		return lebronVsJordan()
 	}
 
-	// Email / letter drafting
-	if strings.Contains(lower, "draft") || strings.Contains(lower, "write an email") ||
-		strings.Contains(lower, "write a letter") || strings.Contains(lower, "email to") {
-		return generateContextualEmail(original)
+	// Systems, Infrastructure & Engineering (ONLY when technical!)
+	if strings.Contains(lower, "circuit breaker") {
+		return circuitBreakerExplainer()
 	}
-
-	// Technology comparisons
-	if (strings.Contains(lower, " go ") || strings.HasPrefix(lower, "go ") || strings.Contains(lower, "golang")) &&
-		strings.Contains(lower, "python") {
+	if strings.Contains(lower, "rate limit") || strings.Contains(lower, "token bucket") {
+		return rateLimitExplainer()
+	}
+	if strings.Contains(lower, "consensus") || strings.Contains(lower, "raft") || strings.Contains(lower, "paxos") {
+		return distributedConsensus()
+	}
+	if (strings.Contains(lower, " go ") || strings.HasPrefix(lower, "go ") || strings.Contains(lower, "golang")) && strings.Contains(lower, "python") {
 		return goVsPython()
 	}
 	if strings.Contains(lower, "rest") && strings.Contains(lower, "graphql") {
@@ -713,8 +732,6 @@ func routeToHandler(lower, original string) string {
 	if strings.Contains(lower, "microservice") {
 		return microservices()
 	}
-
-	// Infrastructure / concepts
 	if strings.Contains(lower, "cap theorem") || (strings.Contains(lower, "cap ") && strings.Contains(lower, "theorem")) {
 		return capTheorem()
 	}
@@ -730,31 +747,6 @@ func routeToHandler(lower, original string) string {
 	if strings.Contains(lower, "attention") && (strings.Contains(lower, "transformer") || strings.Contains(lower, "self-attention")) {
 		return transformerAttention()
 	}
-
-	// Code generation
-	if strings.Contains(lower, "reverse") && strings.Contains(lower, "string") {
-		return reverseStringCode()
-	}
-	if strings.Contains(lower, "concurren") || strings.Contains(lower, "goroutine") || strings.Contains(lower, "worker pool") {
-		return workerPoolCode()
-	}
-	if strings.Contains(lower, "code") || strings.Contains(lower, "function") ||
-		strings.Contains(lower, "algorithm") || strings.Contains(lower, "implement") {
-		return genericHandlerCode()
-	}
-
-	// Circuit breaker / resilience — NexusLLM's own domain
-	if strings.Contains(lower, "circuit breaker") {
-		return circuitBreakerExplainer()
-	}
-	if strings.Contains(lower, "rate limit") || strings.Contains(lower, "token bucket") {
-		return rateLimitExplainer()
-	}
-
-	// Distributed systems
-	if strings.Contains(lower, "consensus") || strings.Contains(lower, "raft") || strings.Contains(lower, "paxos") {
-		return distributedConsensus()
-	}
 	if strings.Contains(lower, "docker") || strings.Contains(lower, "container") {
 		return dockerExplainer()
 	}
@@ -763,20 +755,6 @@ func routeToHandler(lower, original string) string {
 	}
 	if strings.Contains(lower, "cache") || strings.Contains(lower, "caching") {
 		return cachingExplainer()
-	}
-
-	// Conversational & system queries
-	if strings.Contains(lower, "who are you") || strings.Contains(lower, "what are you") || strings.Contains(lower, "what is nexus") {
-		return "I am Nexus Gateway — an enterprise AI gateway written in Go that manages multi-provider LLM routing, real-time circuit breakers, automatic fallback cascades, and prompt caching across OpenAI, Anthropic, Gemini, and DeepSeek."
-	}
-	if strings.Contains(lower, "joke") {
-		return "Why do distributed systems engineers never play hide and seek?\n\nBecause good luck achieving quorum on where anyone is hiding."
-	}
-	if strings.Contains(lower, "thank") {
-		return "You're welcome! Feel free to test queries, code generation, or resilience fault injection."
-	}
-	if strings.Contains(lower, "what can you do") || strings.Contains(lower, "help") || strings.Contains(lower, "capabilities") {
-		return "Nexus Gateway provides high-availability LLM infrastructure:\n\n• Multi-provider routing: OpenAI (GPT-4o), Anthropic (Claude 3.5), Google (Gemini 1.5), DeepSeek (V3)\n• Automatic failover: immediate cascade to backup models when an upstream encounters a 429 rate limit or timeout\n• SHA-256 prompt caching: 1ms instant responses with zero upstream token spend\n• Zero-trust PII redaction: regex-based filtering of sensitive emails, API keys, and credentials\n• Live Prometheus & SSE telemetry: P50/P95/P99 latency histograms and live circuit state events"
 	}
 	if strings.Contains(lower, "database") || strings.Contains(lower, "sql vs nosql") {
 		return "SQL databases (PostgreSQL, MySQL) enforce relational schemas and ACID guarantees, making them ideal for financial transactions and structured relational entities. NoSQL systems (Cassandra, MongoDB, DynamoDB) offer horizontal scalability and flexible schema modeling, trading strict immediate consistency for high write throughput (BASE semantics)."
@@ -787,18 +765,99 @@ func routeToHandler(lower, original string) string {
 	if strings.Contains(lower, "tcp") && strings.Contains(lower, "udp") {
 		return "TCP is connection-oriented, providing reliable, ordered byte-stream delivery with congestion and flow control via a 3-way handshake. UDP is connectionless and lightweight, transmitting datagrams with minimal overhead and zero retransmission guarantees. TCP powers HTTP, SSH, and gRPC; UDP is chosen for real-time video, gaming, DNS, and VoIP."
 	}
+	if strings.Contains(lower, "reverse") && strings.Contains(lower, "string") {
+		return reverseStringCode()
+	}
+	if strings.Contains(lower, "concurren") || strings.Contains(lower, "goroutine") || strings.Contains(lower, "worker pool") {
+		return workerPoolCode()
+	}
+	if strings.Contains(lower, "code") || strings.Contains(lower, "function") || strings.Contains(lower, "algorithm") || strings.Contains(lower, "implement") {
+		return genericHandlerCode()
+	}
 
-	// Graceful, confident fallback for open-ended queries (no apologies, no robotic env var mentions)
-	return thoughtfulFallback(original)
+	// Final fallback for open-ended queries — natural, helpful response
+	return thoughtfulGeneralResponse(original)
 }
 
-func thoughtfulFallback(prompt string) string {
-	replies := []string{
-		"From an architectural standpoint, the primary considerations are reliability, latency overhead, and operational simplicity. When engineering high-throughput backends, establishing clear failure boundaries and predictable timeouts consistently produces the most dependable outcome.",
-		"When evaluating this in distributed environments, the critical trade-off is between immediate consistency and high availability. Isolating components with circuit breakers ensures that localized dependency slowdowns never escalate into cascading outages.",
-		"This is fundamentally an engineering optimization challenge: balancing resource consumption against fault tolerance. In production infrastructure, standardizing on idempotent interfaces and continuous telemetry provides the safest long-term foundation.",
+func generateLoveLetter(prompt string) string {
+	return `My Dearest,
+
+I wanted to take a quiet moment today to put into words what you truly mean to me. In a world that is often loud and unpredictable, you have become my steady comfort, my brightest joy, and the place where my heart feels completely at home.
+
+Every smile you share, every gentle word, and every memory we have built together reminds me of how profoundly lucky I am. You inspire me to be better, you bring peace to my busiest days, and you fill the smallest, ordinary moments with meaning.
+
+Thank you for your kindness, your warmth, and the boundless love you give so effortlessly. No matter where life takes us, my heart will always choose you, cherish you, and stand by you.
+
+With all my love and devotion,
+Forever yours`
+}
+
+func generatePoem(prompt string) string {
+	lower := strings.ToLower(prompt)
+	if strings.Contains(lower, "haiku") {
+		return "Golden autumn breeze,\nLeaves dance gently in the light,\nSilent dusk arrives."
 	}
-	return replies[rand.Intn(len(replies))]
+	return `The quiet stars illuminate the night,
+A gentle breeze that whispers through the trees,
+The world turns slowly in the fading light,
+As restless hearts at last find gentle ease.
+
+For every shadow that the sunset cast,
+A brighter dawn is waiting to unfold,
+The fleeting moments gather from the past,
+And turn the simplest memories to gold.`
+}
+
+func generateStory(prompt string) string {
+	return `The old clockmaker in the mountain village of Oakhaven was known for crafting timepieces that never lost a second. Yet his most prized creation sat uncompleted on the workbench at the back of his shop — a clock with no hands, only a steady, rhythmic pendulum.
+
+One rainy evening, a young traveler entered seeking shelter and asked why the grandest clock had no face to tell the hour.
+
+The clockmaker looked up with a warm smile and said, "Because the most precious moments in life aren't meant to be counted or hurried. When you find peace, friendship, or purpose, time stands still. This clock is simply here to remind us to live those moments, not measure them."
+
+The traveler sat by the hearth, listening to the gentle tick, and for the first time in many years, felt no urge to rush anywhere at all.`
+}
+
+func generateJoke() string {
+	jokes := []string{
+		"Why do programmers prefer dark mode?\n\nBecause light attracts bugs!",
+		"Why was the JavaScript developer sad?\n\nBecause they didn't Node how to Express themselves.",
+		"There are 10 types of people in the world:\nThose who understand binary, and those who don't.",
+		"A SQL query walks into a bar, walks up to two tables and asks: 'Can I join you?'",
+	}
+	return jokes[rand.Intn(len(jokes))]
+}
+
+func generateRecipe(prompt string) string {
+	return `Here is a classic, foolproof recipe for Chocolate Mug Cake (ready in 2 minutes):
+
+Ingredients:
+• 3 tbsp all-purpose flour
+• 2 tbsp sugar
+• 1 tbsp cocoa powder
+• 1/4 tsp baking powder
+• 3 tbsp milk
+• 1 tbsp melted butter or vegetable oil
+• A small splash of vanilla extract
+• Optional: 1 tbsp chocolate chips
+
+Instructions:
+1. In a microwave-safe mug, whisk together the flour, sugar, cocoa powder, and baking powder using a small fork.
+2. Add the milk, melted butter, and vanilla extract. Stir until smooth and no dry flour remains.
+3. Drop the chocolate chips right into the center of the batter.
+4. Microwave on high for 60–70 seconds. Let cool for 1 minute before enjoying with a scoop of ice cream!`
+}
+
+func generateAdvice(prompt string) string {
+	return `Here is some thoughtful guidance on that:
+
+1. Clarify your core goal: When faced with decisions or challenges, take a step back and identify what truly matters to you in the long run. Short-term friction often fades quickly once the main objective is clear.
+2. Break it into small, manageable steps: Overwhelm usually comes from trying to resolve everything at once. Focus on the single next constructive action you can take today.
+3. Be patient with yourself: Meaningful progress and deep understanding take time. Trust the process, learn from the bumps along the way, and keep moving forward with confidence.`
+}
+
+func thoughtfulGeneralResponse(prompt string) string {
+	return "That's an interesting question! To give you the most relevant answer, could you share a bit more context on what you're looking for? Whether you need practical steps, creative ideas, or specific details, I'm glad to help."
 }
 
 // wrapStructured wraps a plain-text answer in an opt-in structured format.
@@ -870,7 +929,7 @@ func genericHandlerCode() string {
 }
 
 func circuitBreakerExplainer() string {
-	return "A circuit breaker wraps calls to a downstream service and tracks whether those calls succeed. After a configured number of consecutive failures it opens, and requests are rejected immediately — no connection attempt, no thread consumed, no timeout wait.\n\nAfter a recovery timeout the breaker moves to half-open and lets a single probe request through. If it succeeds, the breaker closes and normal traffic resumes. If it fails, the breaker opens again and resets the timer.\n\nThe pattern stops a slow or failing dependency from consuming all available threads and dragging the caller down with it. NexusLLM runs one circuit breaker per provider so a failure on OpenAI doesn't touch the Anthropic or Gemini paths."
+	return "A circuit breaker wraps calls to a downstream service and tracks whether those calls succeed. After a configured number of consecutive failures it opens, and requests are rejected immediately without connection attempts, thread consumption, or timeout delays.\n\nAfter a recovery timeout the breaker moves to half-open and lets a single probe request through. If it succeeds, the breaker closes and normal traffic resumes. If it fails, the breaker opens again and resets the timer.\n\nThe pattern stops a slow or failing dependency from consuming all available threads and dragging the caller down with it. NexusLLM runs one circuit breaker per provider so a failure on OpenAI doesn't touch the Anthropic or Gemini paths."
 }
 
 func rateLimitExplainer() string {
@@ -878,11 +937,11 @@ func rateLimitExplainer() string {
 }
 
 func distributedConsensus() string {
-	return "Distributed consensus is how a cluster of independent nodes agrees on a single value even when some nodes crash or messages are delayed.\n\nRaft and Paxos are crash-fault-tolerant: they elect a leader through which all writes are serialised, then replicate entries to followers and commit once a quorum acknowledges. etcd, Consul, and CockroachDB use Raft.\n\nByzantine fault-tolerant algorithms (Tendermint, HotStuff) go further and tolerate nodes that actively lie — not just nodes that crash. Ethereum's proof-of-stake uses a BFT variant.\n\nEvery consensus algorithm must satisfy safety (all honest nodes agree) and liveness (the system makes progress when a quorum is reachable). Getting both right under network partitions is the hard part."
+	return "Distributed consensus is how a cluster of independent nodes agrees on a single value even when some nodes crash or messages are delayed.\n\nRaft and Paxos are crash-fault-tolerant: they elect a leader through which all writes are serialised, then replicate entries to followers and commit once a quorum acknowledges. etcd, Consul, and CockroachDB use Raft.\n\nByzantine fault-tolerant algorithms (Tendermint, HotStuff) go further and tolerate nodes that actively lie, not just nodes that crash. Ethereum's proof-of-stake uses a BFT variant.\n\nEvery consensus algorithm must satisfy safety (all honest nodes agree) and liveness (the system makes progress when a quorum is reachable). Getting both right under network partitions is the hard part."
 }
 
 func dockerExplainer() string {
-	return "A container packages an application with its runtime dependencies into an isolated filesystem and process namespace. The host kernel is shared, which makes containers far lighter than VMs — a container starts in milliseconds.\n\nDocker builds images from a Dockerfile, where each instruction produces an immutable layer. Layers are cached and reused across builds. The final image is the ordered stack of those layers.\n\nWhen a container starts, Docker adds a writable layer on top. That layer is discarded when the container is removed — which is why data that needs to survive must be written to a mounted volume."
+	return "A container packages an application with its runtime dependencies into an isolated filesystem and process namespace. The host kernel is shared, which makes containers far lighter than VMs: a container starts in milliseconds.\n\nDocker builds images from a Dockerfile, where each instruction produces an immutable layer. Layers are cached and reused across builds. The final image is the ordered stack of those layers.\n\nWhen a container starts, Docker adds a writable layer on top. That layer is discarded when the container is removed, which is why data that needs to survive must be written to a mounted volume."
 }
 
 func kubernetesExplainer() string {

@@ -684,7 +684,7 @@ func seedTelemetry(t *metrics.Telemetry, c *cache.Cache, l *ratelimit.Limiter, r
 	c.Set(
 		"gpt-4o",
 		"Explain the circuit breaker pattern in distributed systems",
-		"A circuit breaker wraps calls to a downstream service and tracks whether those calls succeed. After a configured number of consecutive failures it opens, and requests are rejected immediately — no connection attempt, no thread consumed, no timeout wait.\n\nAfter a recovery timeout the breaker moves to half-open and lets a single probe request through. If it succeeds, the breaker closes and normal traffic resumes.",
+		"A circuit breaker wraps calls to a downstream service and tracks whether those calls succeed. After a configured number of consecutive failures it opens, and requests are rejected immediately without connection attempts, thread consumption, or timeout delays.\n\nAfter a recovery timeout the breaker moves to half-open and lets a single probe request through. If it succeeds, the breaker closes and normal traffic resumes.",
 		12, 120, 0.0035,
 	)
 	c.Set(
