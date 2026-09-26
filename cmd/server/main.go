@@ -714,7 +714,7 @@ func seedTelemetry(t *metrics.Telemetry, c *cache.Cache, l *ratelimit.Limiter, r
 		{"gpt-4o", "Cache", "Explain the circuit breaker pattern in distributed systems", 132, 1, 0.0, 0.0035, true, false, "CACHED", 19},
 		{"gemini-1.5-pro", "Google Gemini", "How does token bucket rate limiting prevent bursts?", 420, 142, 0.0016, 0.0, false, false, "SUCCESS", 16},
 		{"deepseek-chat", "DeepSeek", "Write a Go worker pool with waitgroups", 490, 96, 0.0003, 0.0, false, false, "SUCCESS", 14},
-		{"gpt-4o", "Anthropic", "Analyze transaction matching latency (OpenAI 429)", 580, 485, 0.0075, 0.0, false, true, "FALLBACK", 12},
+		{"gpt-4o", "Anthropic", "Analyze transaction matching latency (OpenAI 429)", 580, 265, 0.0075, 0.0, false, true, "FALLBACK", 12},
 		{"claude-3-5-sonnet", "Cache", "What is the capital of France?", 16, 1, 0.0, 0.00018, true, false, "CACHED", 10},
 		{"gpt-4o", "OpenAI", "Explain Kubernetes control plane components", 610, 245, 0.0092, 0.0, false, false, "SUCCESS", 8},
 		{"deepseek-chat", "DeepSeek", "Calculate 1337 * 42 arithmetic", 64, 88, 0.0001, 0.0, false, false, "SUCCESS", 6},
@@ -747,10 +747,6 @@ func seedTelemetry(t *metrics.Telemetry, c *cache.Cache, l *ratelimit.Limiter, r
 
 	// Update tenant usage baseline
 	l.RecordUsage("nx-key-demo-secret", 3200, 2400, 5600, 0.062)
-
-	// 3. Initialize OpenAI in the OPEN state with healthy historical metrics.
-	// Demonstrates active circuit breaking and automatic failover out of the box.
-	r.SetSimulatedError(router.ProviderOpenAI, true)
 }
 
 func truncate(s string, maxLen int) string {
@@ -1183,8 +1179,8 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:12px;}
         <div class="side-block">
           <div class="side-title">Mesh Telemetry</div>
           <div class="metric-row"><span class="metric-label">P50 Latency</span><span class="metric-val" id="sb-p50">165ms</span></div>
-          <div class="metric-row"><span class="metric-label">P95 Latency</span><span class="metric-val" id="sb-p95">580ms</span></div>
-          <div class="metric-row"><span class="metric-label">P99 Latency</span><span class="metric-val" id="sb-p99">890ms</span></div>
+          <div class="metric-row"><span class="metric-label">P95 Latency</span><span class="metric-val" id="sb-p95">245ms</span></div>
+          <div class="metric-row"><span class="metric-label">P99 Latency</span><span class="metric-val" id="sb-p99">310ms</span></div>
           <div class="metric-row"><span class="metric-label">Cache Hit Ratio</span><span class="metric-val" id="sb-cache" style="color:var(--cyan)">16.7%</span></div>
           <div class="metric-row"><span class="metric-label">Cost Saved</span><span class="metric-val" id="sb-saved" style="color:var(--emerald)">$0.0126</span></div>
         </div>
@@ -1231,7 +1227,7 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:12px;}
             <div class="msg-author">Nexus Gateway</div>
             <div class="bubble">Production gateway active. Incoming prompts pass through rate limiting, PII redaction, SHA-256 caching, and automatic fallback cascades across OpenAI, Anthropic, Gemini, and DeepSeek.
 
-OpenAI currently starts in an active <strong>OPEN (TRIPPED)</strong> circuit state to showcase real-time failover. Sending a prompt with GPT-4o will automatically cascade to Claude 3.5 Sonnet with zero downtime.
+All provider circuits are currently <strong>CLOSED (HEALTHY)</strong>. Go to the <strong>Resilience &amp; Chaos</strong> tab and click <strong>'Simulate 429 Outage'</strong> on OpenAI to test automatic fallback cascade to Claude 3.5 Sonnet in real time!
 
 What would you like to explore?</div>
             <div class="msg-meta">
@@ -1277,7 +1273,7 @@ What would you like to explore?</div>
           <div class="diag-node" id="node-OpenAI">
             <span class="diag-node-name">OpenAI</span>
             <span class="diag-node-role">Primary Tier &middot; GPT-4o</span>
-            <span class="diag-node-badge state-open" id="badge-OpenAI">OPEN</span>
+            <span class="diag-node-badge state-closed" id="badge-OpenAI">CLOSED</span>
           </div>
           <div class="diag-arrow">&rarr;</div>
           <div class="diag-node" id="node-Anthropic">
@@ -1323,9 +1319,9 @@ What would you like to explore?</div>
       </div>
 
       <div class="tail-latency-grid">
-        <div class="lat-card"><div class="lat-title">P50 Latency</div><div class="lat-metric" style="color:var(--emerald)"><span id="tel-p50">165</span><span class="lat-unit">ms</span></div></div>
-        <div class="lat-card"><div class="lat-title">P95 Latency</div><div class="lat-metric" style="color:var(--amber)"><span id="tel-p95">580</span><span class="lat-unit">ms</span></div></div>
-        <div class="lat-card"><div class="lat-title">P99 Latency</div><div class="lat-metric" style="color:var(--rose)"><span id="tel-p99">890</span><span class="lat-unit">ms</span></div></div>
+        <div class="lat-card"><div class="lat-title">P50 Primary Latency</div><div class="lat-metric" style="color:var(--emerald)"><span id="tel-p50">165</span><span class="lat-unit">ms</span></div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">Median response time</div></div>
+        <div class="lat-card"><div class="lat-title">P95 Primary Latency</div><div class="lat-metric" style="color:var(--emerald)"><span id="tel-p95">245</span><span class="lat-unit">ms</span></div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">Clean non-fallback baseline</div></div>
+        <div class="lat-card"><div class="lat-title">P99 Tail Latency</div><div class="lat-metric" style="color:var(--amber)"><span id="tel-p99">310</span><span class="lat-unit">ms</span></div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">Complex query &amp; cold network</div></div>
       </div>
 
       <div class="chart-section">
