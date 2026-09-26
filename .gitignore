@@ -1,0 +1,29 @@
+# Compiled binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go build output
+/nexusllm
+/nexusllm.exe
+
+# Test cache
+*.test
+*.out
+
+# Environment / secrets — NEVER commit these
+.env
+.env.*
+*.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

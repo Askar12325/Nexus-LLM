@@ -112,8 +112,10 @@ func (l *Limiter) CheckAndConsume(apiKey string, estimatedTokens int64) (*Tenant
 	return t, nil
 }
 
-// RecordUsage settles the exact tokens consumed and cost incurred
-func (l *Limiter) RecordUsage(apiKey string, promptTokens, compTokens int, costUSD float64) {
+// RecordUsage settles the exact tokens consumed and cost incurred.
+// It corrects the estimated token count that was pre-charged in CheckAndConsume
+// to avoid double-counting in TotalTokens.
+func (l *Limiter) RecordUsage(apiKey string, promptTokens, compTokens int, estimatedTokens int64, costUSD float64) {
 	t, err := l.GetTenantByAPIKey(apiKey)
 	if err != nil {
 		return
@@ -122,6 +124,7 @@ func (l *Limiter) RecordUsage(apiKey string, promptTokens, compTokens int, costU
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	actualTokens := int64(promptTokens + compTokens)
+	// Replace the estimated pre-charge with the real token count
+	t.TotalTokens = t.TotalTokens - estimatedTokens + actualTokens
 	t.TotalSpentUSD += costUSD
-	t.TotalTokens += actualTokens
 }
