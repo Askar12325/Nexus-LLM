@@ -99,7 +99,7 @@ func main() {
 	l.RegisterTenant(demoTenant)
 
 	// Pre-seed realistic telemetry, prompt cache, and provider baseline states.
-	// Starts OpenAI in OPEN state to immediately demonstrate live resilience & fallback out of the box.
+	// All providers start in CLOSED (HEALTHY) state; user simulates 429 outage via UI to test failover.
 	seedTelemetry(t, c, l, r)
 
 	server := &Server{
@@ -776,7 +776,7 @@ const dashboardHTML = `<!DOCTYPE html>
 <title>Nexus Gateway · Enterprise AI Mesh</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#07090e;
@@ -787,33 +787,33 @@ const dashboardHTML = `<!DOCTYPE html>
   --card-subtle:#0d1320;
   --border:rgba(255,255,255,0.07);
   --border-subtle:rgba(255,255,255,0.035);
-  --border-strong:rgba(255,255,255,0.15);
+  --border-strong:rgba(255,255,255,0.14);
   --text-main:#f8fafc;
   --text-secondary:#cbd5e1;
   --text-muted:#8492a6;
   --text-dim:#526075;
 
-  /* Primary interactive chrome: authoritative steel blue */
+  /* Primary action: calm, authoritative steel blue */
   --primary:#2563eb;
   --primary-hover:#1d4ed8;
-  --primary-glow:rgba(37,99,235,0.22);
+  --primary-glow:rgba(37,99,235,0.20);
 
-  /* Quiet Healthy: calm, dignified slate with subtle emerald dot */
-  --healthy-bg:rgba(255,255,255,0.035);
+  /* Quiet Healthy: subdued slate with emerald indicator */
+  --healthy-bg:rgba(255,255,255,0.03);
   --healthy-border:rgba(255,255,255,0.08);
   --healthy-text:#94a3b8;
   --healthy-dot:#10b981;
 
-  /* HERO Failover / Outage Accent: hero amber/orange (commands focus) */
+  /* Outage / Failover Accent: clear amber */
   --amber:#f59e0b;
   --amber-hero:#fbbf24;
-  --amber-bg:rgba(245,158,11,0.10);
-  --amber-border:rgba(245,158,11,0.38);
+  --amber-bg:rgba(245,158,11,0.09);
+  --amber-border:rgba(245,158,11,0.32);
 
-  /* Critical Trip / Error Accent */
+  /* Critical / Error */
   --rose:#ef4444;
-  --rose-bg:rgba(239,68,68,0.10);
-  --rose-border:rgba(239,68,68,0.28);
+  --rose-bg:rgba(239,68,68,0.09);
+  --rose-border:rgba(239,68,68,0.25);
 
   --cyan:#0ea5e9;
   --emerald:#10b981;
@@ -838,8 +838,8 @@ body{
 
 /* ── Top Bar ── */
 .topbar{
-  height:50px;
-  background:rgba(8,11,18,0.96);
+  height:48px;
+  background:rgba(8,11,18,0.97);
   backdrop-filter:blur(16px);
   border-bottom:1px solid var(--border);
   display:flex;
@@ -853,60 +853,68 @@ body{
 }
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
 .brand-glyph{
-  width:32px;height:32px;border-radius:var(--r-sm);
-  background:rgba(37,99,235,0.06);border:1px solid rgba(59,130,246,0.32);
+  width:28px;height:28px;border-radius:var(--r-xs);
+  background:rgba(37,99,235,0.08);border:1px solid rgba(59,130,246,0.3);
   display:flex;align-items:center;justify-content:center;
-  transition:all 0.18s ease;
+  transition:all 0.15s ease;
 }
-.brand:hover .brand-glyph{border-color:var(--primary);background:rgba(37,99,235,0.14);box-shadow:0 0 12px rgba(59,130,246,0.25);}
+.brand:hover .brand-glyph{border-color:var(--primary);background:rgba(37,99,235,0.16);}
 .brand-text-col{display:flex;flex-direction:column;gap:1px;}
 .brand-title{
-  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:13.5px;
-  letter-spacing:0.8px;color:#fff;display:flex;align-items:center;gap:4px;line-height:1.2;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:13px;
+  letter-spacing:0.6px;color:#fff;display:flex;align-items:center;gap:4px;line-height:1.2;
 }
-.brand-subtext{font-weight:600;color:#60a5fa;letter-spacing:0.8px;}
+.brand-subtext{font-weight:600;color:#60a5fa;letter-spacing:0.6px;}
 .brand-meta{
   font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:600;
-  letter-spacing:0.8px;color:var(--text-dim);line-height:1;display:flex;align-items:center;gap:5px;
+  letter-spacing:0.5px;color:var(--text-dim);line-height:1;display:flex;align-items:center;gap:5px;
 }
 .meta-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#10b981;box-shadow:0 0 5px rgba(16,185,129,0.7);}
 
-.nav{display:flex;gap:2px;background:rgba(255,255,255,0.02);padding:2px;border-radius:var(--r-sm);border:1px solid var(--border);}
+/* Clean text-only navigation tabs */
+.nav{
+  display:flex;gap:3px;background:rgba(255,255,255,0.02);padding:2px;
+  border-radius:var(--r-sm);border:1px solid var(--border);
+  overflow-x:auto;white-space:nowrap;scrollbar-width:none;
+}
+.nav::-webkit-scrollbar{display:none;}
 .nav-tab{
-  padding:5px 12px;border-radius:var(--r-xs);font-size:11.5px;font-weight:600;
+  padding:5px 12px;border-radius:var(--r-xs);font-size:12px;font-weight:500;
   color:var(--text-muted);background:transparent;border:1px solid transparent;cursor:pointer;
-  transition:all 0.12s ease;display:flex;align-items:center;gap:5px;
+  transition:all 0.12s ease;white-space:nowrap;
 }
 .nav-tab:hover{color:var(--text-main);background:rgba(255,255,255,0.035);}
-.nav-tab.active{background:var(--card);color:#fff;border-color:var(--border-strong);box-shadow:0 1px 3px rgba(0,0,0,0.5);}
-.tab-icon{font-size:12px;opacity:0.85;}
+.nav-tab.active{
+  background:var(--card);color:#fff;font-weight:600;
+  border-color:var(--border-strong);box-shadow:0 1px 3px rgba(0,0,0,0.4);
+}
 
 .top-right{display:flex;align-items:center;gap:10px;}
 .live-badge{
   display:flex;align-items:center;gap:6px;
-  padding:3px 9px;border-radius:var(--r-xs);
-  background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.22);
-  font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.5px;color:#34d399;
+  padding:3px 8px;border-radius:var(--r-xs);
+  background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.2);
+  font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.4px;color:#34d399;
 }
-.live-dot{width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 6px rgba(16,185,129,0.8);animation:beaconPulse 2s infinite;}
-@keyframes beaconPulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.live-dot{width:5px;height:5px;border-radius:50%;background:#10b981;box-shadow:0 0 5px rgba(16,185,129,0.8);animation:beaconPulse 2s infinite;}
+@keyframes beaconPulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
 
 /* ── Pages Layout ── */
 .main-view{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;}
-.tab-content{display:none;flex:1;height:calc(100vh - 50px);overflow:hidden;}
+.tab-content{display:none;flex:1;height:calc(100vh - 48px);overflow:hidden;}
 .tab-content.active{display:flex;}
 
 /* ── Playground Layout ── */
-.play-layout{display:flex;flex:1;width:100%;height:100%;}
+.play-layout{display:flex;flex:1;width:100%;height:100%;position:relative;}
 .sidebar-panel{
   width:280px;flex-shrink:0;border-right:1px solid var(--border);
   background:var(--surface);display:flex;flex-direction:column;
-  overflow-y:auto;
+  overflow-y:auto;z-index:20;
 }
 .side-block{padding:12px 14px;border-bottom:1px solid var(--border);}
 .side-title{
   font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;
-  letter-spacing:0.8px;text-transform:uppercase;color:var(--text-dim);
+  letter-spacing:0.6px;text-transform:uppercase;color:var(--text-dim);
   margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;
 }
 .side-badge{
@@ -916,26 +924,26 @@ body{
 .metric-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11.5px;border-bottom:1px solid rgba(255,255,255,0.02);}
 .metric-row:last-child{border-bottom:none;}
 .metric-label{color:var(--text-muted);font-size:11px;}
-.metric-val{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--text-main);}
+.metric-val{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:12px;color:var(--text-main);}
 
-/* Redesigned Structured Provider Pills in Sidebar */
+/* Structured Provider Pills in Sidebar */
 .provider-pill{
   display:flex;flex-direction:column;gap:5px;
-  padding:8px 10px;border-radius:var(--r-sm);background:var(--panel);
+  padding:8px 10px;border-radius:var(--r-xs);background:var(--panel);
   border:1px solid var(--border);margin-bottom:6px;transition:border-color 0.15s;
 }
 .provider-pill:last-child{margin-bottom:0;}
 .provider-pill:hover{border-color:var(--border-strong);}
 .provider-pill.pill-active-alert{border-color:var(--amber-border);background:rgba(245,158,11,0.04);}
 .pill-top{display:flex;justify-content:space-between;align-items:center;}
-.pill-name{font-weight:700;color:var(--text-main);font-size:12px;}
+.pill-name{font-weight:600;color:var(--text-main);font-size:12px;}
 .pill-status{
   font-size:8.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.4px;
   padding:2px 6px;border-radius:var(--r-xs);text-transform:uppercase;display:flex;align-items:center;gap:4px;
 }
 .pill-closed{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);}
 .pill-closed::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#10b981;}
-.pill-open{background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);animation:subtlePulse 1.8s infinite;}
+.pill-open{background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);}
 .pill-half{background:rgba(245,158,11,0.08);color:var(--amber);border:1px solid rgba(245,158,11,0.25);}
 .pill-metrics{
   display:flex;align-items:center;gap:6px;font-size:10px;
@@ -943,63 +951,78 @@ body{
 }
 .pm-item{display:flex;align-items:center;gap:3px;}
 .pm-lbl{color:var(--text-dim);font-weight:600;}
-.pm-val{color:var(--text-secondary);font-weight:700;}
-.pm-sep{color:var(--text-dim);opacity:0.5;}
+.pm-val{color:var(--text-secondary);font-weight:600;}
+.pm-sep{color:var(--text-dim);opacity:0.4;}
 
 /* Fallback order block */
-.fallback-sideblock{background:rgba(37,99,235,0.03);}
+.fallback-sideblock{background:rgba(37,99,235,0.02);}
 .fallback-hdr{display:flex;align-items:center;gap:6px;font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
 .fallback-chain-flow{display:flex;align-items:center;gap:4px;font-size:10px;font-family:'JetBrains Mono',monospace;flex-wrap:wrap;}
-.flow-node{padding:2px 5px;background:var(--panel);border:1px solid var(--border);border-radius:2px;color:var(--text-secondary);}
-.flow-node.active{border-color:rgba(59,130,246,0.4);color:#93c5fd;}
+.flow-node{padding:2px 6px;background:var(--panel);border:1px solid var(--border);border-radius:2px;color:var(--text-secondary);}
+.flow-node.active{border-color:rgba(59,130,246,0.35);color:#93c5fd;}
 .flow-arrow{color:var(--text-dim);}
 
-/* Chat Central — Dense Engineering Console */
+/* Mobile drawer backdrop */
+.drawer-backdrop{
+  display:none;position:fixed;inset:48px 0 0 0;
+  background:rgba(0,0,0,0.65);backdrop-filter:blur(3px);z-index:490;
+}
+.drawer-backdrop.active{display:block;}
+
+/* Chat Central */
 .chat-center{flex:1;display:flex;flex-direction:column;background:var(--bg);height:100%;overflow:hidden;}
 .chat-header{
-  padding:8px 18px;border-bottom:1px solid var(--border);
+  padding:8px 16px;border-bottom:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;
-  background:var(--surface);flex-shrink:0;
+  background:var(--surface);flex-shrink:0;gap:8px;
 }
-.model-picker{display:flex;align-items:center;gap:8px;}
-.picker-lbl{font-size:10.5px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;}
+.chat-header-left{display:flex;align-items:center;gap:8px;}
+.drawer-toggle-btn{
+  display:none;align-items:center;gap:5px;
+  padding:4px 8px;border-radius:var(--r-xs);
+  background:var(--panel);border:1px solid var(--border-strong);
+  color:var(--text-secondary);font-size:11px;font-weight:600;cursor:pointer;
+}
+.drawer-toggle-btn:hover{background:var(--panel-hover);color:#fff;}
+.model-picker{display:flex;align-items:center;gap:6px;}
+.picker-lbl{font-size:10.5px;font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;}
 .select-input{
   background:var(--panel);color:#fff;border:1px solid var(--border-strong);
-  padding:5px 10px;border-radius:var(--r-xs);font-size:11.5px;font-weight:600;
+  padding:4px 8px;border-radius:var(--r-xs);font-size:11.5px;font-weight:600;
   outline:none;cursor:pointer;transition:border-color 0.15s;
 }
 .select-input:focus{border-color:var(--primary);}
-.chat-controls{display:flex;align-items:center;gap:14px;}
+.chat-controls{display:flex;align-items:center;gap:12px;}
 .toggle-wrap{
-  display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;
+  display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;
   color:var(--text-muted);cursor:pointer;user-select:none;
 }
 .switch-track{
-  width:30px;height:16px;border-radius:99px;background:var(--panel);
+  width:28px;height:15px;border-radius:99px;background:var(--panel);
   border:1px solid var(--border-strong);position:relative;transition:all 0.15s;
 }
 .switch-track.on{background:var(--primary);border-color:transparent;}
 .switch-thumb{
-  width:10px;height:10px;border-radius:50%;background:#fff;
+  width:9px;height:9px;border-radius:50%;background:#fff;
   position:absolute;top:2px;left:2px;transition:all 0.15s;
 }
-.switch-track.on .switch-thumb{transform:translateX(14px);}
+.switch-track.on .switch-thumb{transform:translateX(13px);}
 
-/* Message Thread — Clean Engineering Console */
+/* Message Thread */
 .thread{flex:1;overflow-y:auto;padding:12px 18px;display:flex;flex-direction:column;gap:8px;}
-.msg{display:flex;flex-direction:column;gap:3px;animation:msgIn 0.15s ease-out;}
-@keyframes msgIn{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:translateY(0);}}
+.msg{display:flex;flex-direction:column;gap:3px;animation:msgIn 0.12s ease-out;}
+@keyframes msgIn{from{opacity:0;transform:translateY(2px);}to{opacity:1;transform:translateY(0);}}
 .msg.user{align-self:flex-end;max-width:82%;}
 .msg.bot{align-self:stretch;}
 
 .msg.user .user-meta{
-  font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.5px;
-  color:var(--text-dim);text-align:right;text-transform:uppercase;
+  font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.4px;
+  color:var(--text-dim);text-align:right;
 }
 .msg.user .bubble{
-  background:rgba(37,99,235,0.08);border:1px solid rgba(59,130,246,0.26);
+  background:rgba(37,99,235,0.08);border:1px solid rgba(59,130,246,0.25);
   border-left:2px solid var(--primary);
-  color:#fff;padding:8px 12px;border-radius:var(--r-sm);font-size:13px;line-height:1.52;
+  color:#fff;padding:8px 12px;border-radius:var(--r-xs);font-size:13px;line-height:1.52;
   white-space:pre-wrap;word-break:break-word;
 }
 
@@ -1007,7 +1030,7 @@ body{
 .bot-card{
   background:var(--surface);border:1px solid var(--border);
   border-left:2px solid rgba(255,255,255,0.18);
-  border-radius:var(--r-sm);overflow:hidden;transition:border-color 0.15s;
+  border-radius:var(--r-xs);overflow:hidden;transition:border-color 0.15s;
 }
 .bot-card:hover{border-color:var(--border-strong);}
 .bot-header{
@@ -1016,7 +1039,7 @@ body{
 }
 .bot-identity{display:flex;align-items:center;gap:6px;}
 .provider-badge{
-  font-size:10.5px;font-weight:700;font-family:'JetBrains Mono',monospace;
+  font-size:11px;font-weight:600;font-family:'JetBrains Mono',monospace;
   color:#fff;display:flex;align-items:center;gap:5px;
 }
 .provider-badge::before{
@@ -1024,12 +1047,12 @@ body{
 }
 .tag-badge{
   font-size:8.5px;font-family:'JetBrains Mono',monospace;font-weight:700;
-  letter-spacing:0.5px;padding:2px 5px;border-radius:var(--r-xs);text-transform:uppercase;
+  letter-spacing:0.4px;padding:2px 5px;border-radius:var(--r-xs);text-transform:uppercase;
 }
 .tag-direct{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);}
 .tag-stream{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);}
-.tag-cache{background:rgba(14,165,233,0.1);color:var(--cyan);border:1px solid rgba(14,165,233,0.25);}
-.tag-fallback{background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);font-weight:800;}
+.tag-cache{background:rgba(14,165,233,0.09);color:var(--cyan);border:1px solid rgba(14,165,233,0.22);}
+.tag-fallback{background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);font-weight:700;}
 
 .bot-telemetry-meta{
   display:flex;align-items:center;gap:6px;font-size:10.5px;font-family:'JetBrains Mono',monospace;
@@ -1041,11 +1064,17 @@ body{
   padding:11px 14px;font-size:13px;line-height:1.56;color:var(--text-main);
   white-space:pre-wrap;word-break:break-word;
 }
+.card-spec-strip{
+  padding:5px 12px;background:rgba(255,255,255,0.012);border-bottom:1px solid var(--border-subtle);
+  display:flex;align-items:center;gap:12px;font-size:10px;font-family:'JetBrains Mono',monospace;
+  color:var(--text-dim);flex-wrap:wrap;
+}
+.card-spec-strip span{display:flex;align-items:center;gap:4px;}
 
-/* Fallback & Sanitization alerts within card */
+/* Failover & Redaction notifications */
 .cascade-alert{
   background:var(--amber-bg);border-bottom:1px solid var(--amber-border);
-  padding:7px 12px;font-size:11px;font-weight:600;color:var(--amber-hero);
+  padding:6px 12px;font-size:11px;font-weight:600;color:var(--amber-hero);
   display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;
 }
 .sanitized-alert{
@@ -1054,31 +1083,30 @@ body{
   display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;
 }
 
-/* Integrated Command Center Dock */
+/* Command Center Dock */
 .console-dock{
   border-top:1px solid var(--border);background:var(--surface);
   display:flex;flex-direction:column;flex-shrink:0;
 }
 .dock-quick-prompts{
-  padding:6px 16px;border-bottom:1px solid var(--border-subtle);
+  padding:5px 14px;border-bottom:1px solid var(--border-subtle);
   display:flex;align-items:center;gap:5px;overflow-x:auto;scrollbar-width:none;
 }
 .dock-quick-prompts::-webkit-scrollbar{display:none;}
 .dock-prompts-label{
-  font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:700;
-  color:var(--text-dim);text-transform:uppercase;letter-spacing:0.6px;margin-right:2px;white-space:nowrap;
+  font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600;
+  color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-right:2px;white-space:nowrap;
 }
 .prompt-chip{
-  flex-shrink:0;padding:3px 8px;border-radius:var(--r-xs);
+  flex-shrink:0;padding:3px 7px;border-radius:var(--r-xs);
   background:var(--panel);border:1px solid var(--border);
-  font-size:10.5px;font-weight:500;color:var(--text-muted);cursor:pointer;
+  font-size:11px;font-weight:500;color:var(--text-muted);cursor:pointer;
   transition:all 0.12s;white-space:nowrap;
 }
 .prompt-chip:hover{border-color:var(--border-strong);color:#fff;background:var(--panel-hover);}
-.prompt-chip .chip-cat{color:var(--text-dim);margin-right:4px;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;}
 
 .dock-input-row{
-  padding:8px 16px 10px 16px;display:flex;gap:8px;align-items:flex-end;
+  padding:8px 14px 10px 14px;display:flex;gap:8px;align-items:flex-end;
 }
 .input-wrap{flex:1;display:flex;flex-direction:column;gap:3px;}
 .text-area{
@@ -1092,9 +1120,9 @@ body{
 .input-hint{font-size:9.5px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);display:flex;justify-content:space-between;align-items:center;}
 .route-indicator-pill{font-weight:600;color:#60a5fa;}
 .send-btn{
-  height:38px;padding:0 16px;border-radius:var(--r-xs);
+  height:38px;padding:0 15px;border-radius:var(--r-xs);
   background:var(--primary);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;
-  font-size:12.5px;font-weight:700;border:none;cursor:pointer;
+  font-size:12px;font-weight:600;border:none;cursor:pointer;
   transition:all 0.12s;display:flex;align-items:center;gap:6px;flex-shrink:0;
 }
 .send-btn:hover{background:var(--primary-hover);}
@@ -1105,60 +1133,60 @@ body{
 }
 
 /* ── Resilience Page ── */
-.resilience-view{padding:20px 28px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;height:100%;}
-.page-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;letter-spacing:-0.4px;color:#fff;}
+.resilience-view{padding:18px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;height:100%;}
+.page-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;font-weight:700;letter-spacing:-0.3px;color:#fff;}
 .page-desc{font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.45;}
 
 /* Visual Cascade Diagram */
 .cascade-diagram{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-sm);padding:14px 18px;
+  border-radius:var(--r-xs);padding:12px 16px;
 }
-.diag-title{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
-.diag-nodes{display:flex;align-items:center;gap:8px;overflow-x:auto;}
+.diag-title{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;}
+.diag-nodes{display:flex;align-items:center;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
 .diag-node{
   padding:8px 12px;border-radius:var(--r-xs);background:var(--panel);
   border:1px solid var(--border);display:flex;flex-direction:column;gap:2px;
   min-width:150px;position:relative;transition:all 0.15s;
 }
 .diag-node.node-open{border-color:var(--amber);background:var(--amber-bg);}
-.diag-node-name{font-weight:700;font-size:12.5px;color:#fff;}
+.diag-node-name{font-weight:600;font-size:12.5px;color:#fff;}
 .diag-node-role{font-size:9.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
 .diag-node-badge{
   position:absolute;top:6px;right:6px;font-size:7.5px;font-family:'JetBrains Mono',monospace;font-weight:700;
   padding:1px 4px;border-radius:2px;text-transform:uppercase;
 }
-.diag-arrow{color:var(--text-dim);font-size:14px;}
+.diag-arrow{color:var(--text-dim);font-size:13px;}
 
 /* Provider Cards Grid */
 .cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
 .p-card{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-sm);padding:14px 16px;display:flex;flex-direction:column;
+  border-radius:var(--r-xs);padding:14px 16px;display:flex;flex-direction:column;
   gap:10px;transition:all 0.15s;position:relative;
 }
 .p-card:hover{border-color:var(--border-strong);}
-.p-card.card-tripped{border-color:var(--amber);background:rgba(245,158,11,0.03);box-shadow:0 0 16px rgba(245,158,11,0.08);}
+.p-card.card-tripped{border-color:var(--amber-border);background:rgba(245,158,11,0.03);box-shadow:0 0 16px rgba(245,158,11,0.06);}
 
 .card-header{display:flex;justify-content:space-between;align-items:flex-start;}
-.card-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;color:#fff;}
-.card-meta{font-size:10.5px;color:var(--text-muted);margin-top:1px;font-family:'JetBrains Mono',monospace;}
+.card-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:13.5px;color:#fff;}
+.card-meta{font-size:10px;color:var(--text-muted);margin-top:1px;font-family:'JetBrains Mono',monospace;}
 
 .card-state{
-  font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.4px;
-  padding:3px 8px;border-radius:var(--r-xs);text-transform:uppercase;display:flex;align-items:center;gap:4px;
+  font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.3px;
+  padding:3px 7px;border-radius:var(--r-xs);display:flex;align-items:center;gap:4px;
 }
 .state-closed{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);}
 .state-closed::before{content:'●';color:#10b981;font-size:9px;}
-.state-open{background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);font-weight:800;animation:subtlePulse 1.8s infinite;}
+.state-open{background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);font-weight:700;}
 .state-open::before{content:'▲';color:var(--amber-hero);font-size:8px;}
 .state-half{background:rgba(245,158,11,0.08);color:var(--amber);border:1px solid rgba(245,158,11,0.25);}
 .state-half::before{content:'◌';color:var(--amber);font-size:9px;}
 
 .card-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:rgba(255,255,255,0.015);padding:8px 10px;border-radius:var(--r-xs);border:1px solid var(--border-subtle);}
 .stat-box{display:flex;flex-direction:column;gap:1px;}
-.stat-lbl{font-size:8.5px;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-dim);}
-.stat-num{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;color:#fff;}
+.stat-lbl{font-size:8.5px;font-family:'JetBrains Mono',monospace;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-dim);}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:600;color:#fff;}
 
 .error-banner{
   background:var(--amber-bg);border:1px solid var(--amber-border);
@@ -1176,7 +1204,7 @@ body{
 .fault-btn{
   padding:7px 12px;border-radius:var(--r-xs);border:none;cursor:pointer;
   font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;
-  display:flex;align-items:center;justify-content:center;gap:5px;
+  display:flex;align-items:center;justify-content:center;gap:5px;min-height:36px;
   transition:all 0.12s;
 }
 .btn-trip{background:transparent;color:var(--text-muted);border:1px solid var(--border-strong);}
@@ -1185,44 +1213,46 @@ body{
 .btn-restore:hover{background:var(--amber-hero);}
 
 /* ── Telemetry Page ── */
-.telemetry-view{padding:20px 28px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;height:100%;}
+.telemetry-view{padding:18px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;height:100%;}
 .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .kpi-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
-  padding:14px 16px;display:flex;flex-direction:column;gap:4px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xs);
+  padding:12px 14px;display:flex;flex-direction:column;gap:3px;
 }
-.kpi-label{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text-dim);}
-.kpi-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;color:#fff;}
+.kpi-label{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;color:var(--text-dim);}
+.kpi-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:700;letter-spacing:-0.4px;color:#fff;}
 .kpi-sub{font-size:10.5px;color:var(--text-muted);}
 
 .tail-latency-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .lat-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
-  padding:14px;text-align:center;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xs);
+  padding:12px;text-align:center;
 }
-.lat-title{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
-.lat-metric{font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.6px;color:#fff;}
-.lat-unit{font-size:12px;font-weight:500;color:var(--text-muted);margin-left:2px;}
+.lat-title{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;color:var(--text-dim);margin-bottom:3px;}
+.lat-metric{font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.5px;color:#fff;}
+.lat-unit{font-size:11px;font-weight:500;color:var(--text-muted);margin-left:2px;}
 
-.chart-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;}
-.chart-title{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
-.bar-chart{display:flex;align-items:flex-end;gap:5px;height:75px;}
-.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
-.bar-fill{width:100%;border-radius:2px 2px 0 0;min-height:4px;transition:height 0.3s ease;}
-.bar-lbl{font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);}
+.chart-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xs);padding:14px 16px;}
+.chart-title{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.6px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.bar-chart-wrap{border-bottom:1px solid var(--border-strong);padding-bottom:4px;}
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:70px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
+.bar-fill{width:100%;border-radius:2px 2px 0 0;min-height:4px;transition:height 0.25s ease, opacity 0.15s;}
+.bar-col:hover .bar-fill{opacity:0.8;}
+.bar-lbl{font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-top:4px;}
 
-/* ── Logs & Tenants Tables ── */
+/* ── Tables ── */
 .table-wrap{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
-  overflow:hidden;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xs);
+  overflow-x:auto;-webkit-overflow-scrolling:touch;
 }
-table{width:100%;border-collapse:collapse;font-size:12px;}
+table{width:100%;min-width:680px;border-collapse:collapse;font-size:12px;}
 th{
-  text-align:left;padding:8px 14px;font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.6px;
+  text-align:left;padding:8px 12px;font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.5px;
   text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);
   background:rgba(255,255,255,0.015);
 }
-td{padding:8px 14px;color:var(--text-muted);border-bottom:1px solid rgba(255,255,255,0.025);vertical-align:middle;}
+td{padding:8px 12px;color:var(--text-muted);border-bottom:1px solid rgba(255,255,255,0.025);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:rgba(255,255,255,0.015);}
 td.td-pri{color:#fff;font-weight:600;}
@@ -1230,21 +1260,45 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11px;}
 
 /* Status badges */
 .status-pill{
-  display:inline-block;padding:2px 6px;border-radius:var(--r-xs);font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.4px;
+  display:inline-block;padding:2px 6px;border-radius:var(--r-xs);font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.3px;
 }
 .st-success{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);}
-.st-cached{background:rgba(14,165,233,0.1);color:var(--cyan);border:1px solid rgba(14,165,233,0.25);}
+.st-cached{background:rgba(14,165,233,0.09);color:var(--cyan);border:1px solid rgba(14,165,233,0.22);}
 .st-fallback{background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);}
 .st-error{background:var(--rose-bg);color:var(--rose);border:1px solid var(--rose-border);}
 
 /* Toast */
 #toast{
-  position:fixed;bottom:20px;right:20px;z-index:999;padding:8px 14px;
+  position:fixed;bottom:18px;right:18px;z-index:999;padding:8px 14px;
   border-radius:var(--r-xs);background:var(--panel);border:1px solid var(--border-strong);
   font-size:11.5px;font-family:'JetBrains Mono',monospace;font-weight:600;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.6);
   transform:translateY(12px);opacity:0;pointer-events:none;transition:all 0.15s cubic-bezier(0.16,1,0.3,1);
 }
 #toast.show{transform:translateY(0);opacity:1;}
+
+/* Responsive Media Queries */
+@media (max-width: 900px) {
+  .drawer-toggle-btn{display:flex;}
+  .sidebar-panel{
+    position:fixed;top:48px;left:0;bottom:0;width:290px;max-width:85vw;
+    z-index:500;transform:translateX(-100%);transition:transform 0.22s cubic-bezier(0.16,1,0.3,1);
+    box-shadow:6px 0 28px rgba(0,0,0,0.7);border-right:1px solid var(--border-strong);
+  }
+  .sidebar-panel.drawer-open{transform:translateX(0);}
+  .cards-grid{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  .tail-latency-grid{grid-template-columns:1fr;}
+  .resilience-view, .telemetry-view{padding:14px 16px;}
+  .chat-header{padding:8px 12px;}
+}
+
+@media (max-width: 640px) {
+  .brand-meta{display:none;}
+  .topbar{padding:0 10px;}
+  .kpi-row{grid-template-columns:1fr;}
+  .dock-input-row{padding:8px 10px;}
+  .thread{padding:10px 12px;}
+}
 </style>
 </head>
 <body>
@@ -1253,35 +1307,33 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11px;}
 <header class="topbar">
   <a class="brand" href="#">
     <div class="brand-glyph">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="12 2, 21.5 6.5, 21.5 17.5, 12 22, 2.5 17.5, 2.5 6.5" stroke="#3b82f6" stroke-width="1.6" stroke-linejoin="round" fill="rgba(37,99,235,0.08)"/>
-        <polygon points="12 6, 17.5 12, 12 18, 6.5 12" stroke="#60a5fa" stroke-width="1.2" stroke-dasharray="2 1" fill="none"/>
-        <line x1="12" y1="2" x2="12" y2="6" stroke="#93c5fd" stroke-width="1.4"/>
-        <line x1="12" y1="18" x2="12" y2="22" stroke="#93c5fd" stroke-width="1.4"/>
-        <line x1="2.5" y1="12" x2="6.5" y2="12" stroke="#93c5fd" stroke-width="1.4"/>
-        <line x1="17.5" y1="12" x2="21.5" y2="12" stroke="#93c5fd" stroke-width="1.4"/>
-        <circle cx="12" cy="12" r="2.5" fill="#60a5fa"/>
-        <circle cx="12" cy="12" r="1" fill="#ffffff"/>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="12,2 21,7.2 21,16.8 12,22 3,16.8 3,7.2" stroke="#3b82f6" stroke-width="1.5" stroke-linejoin="round" fill="rgba(37,99,235,0.08)"/>
+        <polygon points="12,6 17.2,12 12,18 6.8,12" stroke="#60a5fa" stroke-width="1.2" fill="none"/>
+        <circle cx="12" cy="12" r="2" fill="#60a5fa"/>
       </svg>
     </div>
     <div class="brand-text-col">
       <div class="brand-title">NEXUS <span class="brand-subtext">GATEWAY</span></div>
-      <div class="brand-meta"><span class="meta-dot"></span>PLATFORM MESH // v1.4.2 &middot; US-EAST-1</div>
+      <div class="brand-meta"><span class="meta-dot"></span>v1.4.2 &middot; us-east-1</div>
     </div>
   </a>
   <nav class="nav">
-    <button class="nav-tab active" id="tab-play" onclick="switchTab('play')"><span class="tab-icon">⚡</span>Playground</button>
-    <button class="nav-tab" id="tab-res" onclick="switchTab('res')"><span class="tab-icon">🛡</span>Resilience &amp; Chaos</button>
-    <button class="nav-tab" id="tab-tel" onclick="switchTab('tel')"><span class="tab-icon">📊</span>Telemetry</button>
-    <button class="nav-tab" id="tab-logs" onclick="switchTab('logs')"><span class="tab-icon">📋</span>Request Logs</button>
-    <button class="nav-tab" id="tab-ten" onclick="switchTab('ten')"><span class="tab-icon">🔑</span>Tenants</button>
+    <button class="nav-tab active" id="tab-play" onclick="switchTab('play')">Playground</button>
+    <button class="nav-tab" id="tab-res" onclick="switchTab('res')">Resilience</button>
+    <button class="nav-tab" id="tab-tel" onclick="switchTab('tel')">Telemetry</button>
+    <button class="nav-tab" id="tab-logs" onclick="switchTab('logs')">Request Logs</button>
+    <button class="nav-tab" id="tab-ten" onclick="switchTab('ten')">Tenants</button>
   </nav>
   <div class="top-right">
-    <div class="live-badge"><div class="live-dot"></div><span>SSE STREAM LIVE</span></div>
+    <div class="live-badge"><div class="live-dot"></div><span>Live</span></div>
   </div>
 </header>
 
 <main class="main-view">
+
+  <!-- Mobile Drawer Backdrop -->
+  <div class="drawer-backdrop" id="drawer-backdrop" onclick="toggleSidebar()"></div>
 
   <!-- ── PLAYGROUND TAB ── -->
   <section class="tab-content active" id="view-play">
@@ -1289,7 +1341,7 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11px;}
       <!-- Left sidebar -->
       <aside class="sidebar-panel">
         <div class="side-block">
-          <div class="side-title"><span>[01] MESH TELEMETRY</span><span class="side-badge">REALTIME</span></div>
+          <div class="side-title"><span>System Telemetry</span><span class="side-badge">Realtime</span></div>
           <div class="metric-row"><span class="metric-label">P50 Latency</span><span class="metric-val" id="sb-p50">175ms</span></div>
           <div class="metric-row"><span class="metric-label">P95 Latency</span><span class="metric-val" id="sb-p95">310ms</span></div>
           <div class="metric-row"><span class="metric-label">P99 Latency</span><span class="metric-val" id="sb-p99">345ms</span></div>
@@ -1297,15 +1349,14 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11px;}
           <div class="metric-row"><span class="metric-label">Cost Saved</span><span class="metric-val" id="sb-saved" style="color:var(--emerald)">$0.0126</span></div>
         </div>
         <div class="side-block" style="flex:1">
-          <div class="side-title"><span>[02] PROVIDER MESH HEALTH</span><span class="side-badge">4 NODES</span></div>
+          <div class="side-title"><span>Upstream Providers</span><span class="side-badge">4 Nodes</span></div>
           <div id="sb-providers">
             <!-- Populated by JS -->
           </div>
         </div>
         <div class="side-block fallback-sideblock">
           <div class="fallback-hdr">
-            <span class="fallback-icon">🔀</span>
-            <span>[03] CASCADE ORDER</span>
+            <span>Failover Chain</span>
           </div>
           <div class="fallback-chain-flow">
             <span class="flow-node active">OpenAI</span>
@@ -1322,23 +1373,28 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11px;}
       <!-- Chat area -->
       <div class="chat-center">
         <div class="chat-header">
-          <div class="model-picker">
-            <span class="picker-lbl">Active Ingress:</span>
-            <select class="select-input" id="model-select">
-              <option value="gpt-4o">OpenAI · GPT-4o (Primary)</option>
-              <option value="claude-3-5-sonnet">Anthropic · Claude 3.5 Sonnet</option>
-              <option value="gemini-1.5-pro">Google · Gemini 1.5 Pro</option>
-              <option value="deepseek-chat">DeepSeek · V3</option>
-            </select>
+          <div class="chat-header-left">
+            <button class="drawer-toggle-btn" id="drawer-toggle" onclick="toggleSidebar()">
+              <span>☰</span><span>Mesh Nodes</span>
+            </button>
+            <div class="model-picker">
+              <span class="picker-lbl">Model:</span>
+              <select class="select-input" id="model-select">
+                <option value="gpt-4o">OpenAI · GPT-4o (Primary)</option>
+                <option value="claude-3-5-sonnet">Anthropic · Claude 3.5 Sonnet</option>
+                <option value="gemini-1.5-pro">Google · Gemini 1.5 Pro</option>
+                <option value="deepseek-chat">DeepSeek · V3</option>
+              </select>
+            </div>
           </div>
           <div class="chat-controls">
             <!-- Structured Mode Toggle -->
-            <label class="toggle-wrap" title="Opt into structured summary/detail output layout">
-              <span>Structured Mode</span>
+            <label class="toggle-wrap" title="Output summary and detail layout">
+              <span>Structured</span>
               <div class="switch-track" id="sw-struct" onclick="toggleStructured()"><div class="switch-thumb"></div></div>
             </label>
             <!-- Stream Toggle -->
-            <label class="toggle-wrap" title="Real-time SSE token streaming">
+            <label class="toggle-wrap" title="SSE token streaming">
               <span>Streaming</span>
               <div class="switch-track" id="sw-stream" onclick="toggleStreaming()"><div class="switch-thumb"></div></div>
             </label>
@@ -1350,43 +1406,50 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11px;}
             <div class="bot-card">
               <div class="bot-header">
                 <div class="bot-identity">
-                  <span class="provider-badge">NEXUS CORE // MESH ROUTER</span>
-                  <span class="tag-badge tag-direct">OPERATIONAL</span>
+                  <span class="provider-badge">Nexus Gateway · Router</span>
+                  <span class="tag-badge tag-direct">Direct</span>
                 </div>
                 <div class="bot-telemetry-meta">
-                  <span><span class="meta-lbl">TENANT:</span> tenant-default</span>
+                  <span><span class="meta-lbl">Tenant:</span> tenant-default</span>
                   <span class="meta-sep">&middot;</span>
-                  <span><span class="meta-lbl">TIER:</span> Enterprise</span>
+                  <span><span class="meta-lbl">Tier:</span> Enterprise</span>
                   <span class="meta-sep">&middot;</span>
-                  <span><span class="meta-lbl">SECURITY:</span> PII-Redact Active</span>
+                  <span><span class="meta-lbl">PII Filter:</span> Active</span>
                 </div>
               </div>
-              <div class="bot-body">Gateway active on production mesh. Every prompt passes through token-bucket rate limits, zero-trust PII filtering, SHA-256 caching (1ms hit), and circuit-breaker cascades.
+              <div class="card-spec-strip">
+                <span><span>Token-Bucket:</span> 25 RPS / 100k TPM</span>
+                <span>&middot;</span>
+                <span><span>Prompt Cache:</span> SHA-256 (15m TTL)</span>
+                <span>&middot;</span>
+                <span><span>Circuit Breaker:</span> Active Cascade</span>
+              </div>
+              <div class="bot-body">Production AI Gateway operational. Ingress requests are authenticated, rate-limited via token-bucket, sanitized for PII, evaluated against SHA-256 prompt cache, and routed across upstream providers with automatic circuit breaker failover.
 
-All four provider nodes are <strong>HEALTHY // CLOSED</strong>. Click <strong>'Simulate 429 Outage'</strong> on OpenAI in the <strong>Resilience &amp; Chaos</strong> tab to watch live real-time failover to Claude 3.5 Sonnet.</div>
+Select a target model above or click a benchmark query below. To test live failover, simulate an upstream 429 outage on OpenAI from the <strong>Resilience</strong> tab.</div>
             </div>
           </div>
         </div>
 
-        <!-- Integrated Command Dock -->
+        <!-- Command Dock -->
         <div class="console-dock">
           <div class="dock-quick-prompts">
-            <span class="dock-prompts-label">QUICK BENCHMARKS:</span>
-            <button class="prompt-chip" onclick="setPrompt('Calculate 1337 * 42')"><span class="chip-cat">MATH</span>1337 &times; 42</button>
-            <button class="prompt-chip" onclick="setPrompt('Explain how circuit breakers work')"><span class="chip-cat">SYS</span>Circuit Breakers</button>
-            <button class="prompt-chip" onclick="setPrompt('Write a Go worker pool with waitgroups')"><span class="chip-cat">CONC</span>Worker Pool</button>
-            <button class="prompt-chip" onclick="setPrompt('What is the capital of France?')"><span class="chip-cat">GEO</span>Capital of France</button>
-            <button class="prompt-chip" onclick="setPrompt('Who is the richest man on earth?')"><span class="chip-cat">FACT</span>Richest Man</button>
-            <button class="prompt-chip" onclick="setPrompt('Who is the richest footballer?')"><span class="chip-cat">FACT</span>Richest Footballer</button>
-            <button class="prompt-chip" onclick="setPrompt('Write a short love letter')"><span class="chip-cat">CREAT</span>Love Letter</button>
-            <button class="prompt-chip" onclick="setPrompt('Compare Go vs Python for backend systems')"><span class="chip-cat">BENCH</span>Go vs Python</button>
+            <span class="dock-prompts-label">Benchmarks:</span>
+            <button class="prompt-chip" onclick="setPrompt('Calculate 1337 * 42')">1337 &times; 42</button>
+            <button class="prompt-chip" onclick="setPrompt('Explain how circuit breakers work')">Circuit Breakers</button>
+            <button class="prompt-chip" onclick="setPrompt('Write a Go worker pool with waitgroups')">Worker Pool</button>
+            <button class="prompt-chip" onclick="setPrompt('What is the capital of France?')">Capital of France</button>
+            <button class="prompt-chip" onclick="setPrompt('Who is the richest man on earth?')">Richest Person</button>
+            <button class="prompt-chip" onclick="setPrompt('Who is the richest footballer?')">Richest Footballer</button>
+            <button class="prompt-chip" onclick="setPrompt('Write a short love letter')">Short Love Letter</button>
+            <button class="prompt-chip" onclick="setPrompt('Compare Go vs Python for backend systems')">Go vs Python</button>
           </div>
           <div class="dock-input-row">
             <div class="input-wrap">
               <textarea class="text-area" id="prompt-input" placeholder="Enter prompt or query (e.g. explain circuit breakers, who is the richest footballer)..." rows="1" onkeydown="handleKey(event)"></textarea>
               <div class="input-hint">
                 <span>Press <kbd style="background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:2px;">↵ Enter</kbd> to execute &middot; <kbd style="background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:2px;">Shift+↵</kbd> multiline</span>
-                <span id="route-indicator" class="route-indicator-pill">ROUTE: PRIMARY TIER 1 (OpenAI · GPT-4o)</span>
+                <span id="route-indicator" class="route-indicator-pill">Route: Direct (OpenAI · GPT-4o)</span>
               </div>
             </div>
             <button class="send-btn" id="send-button" onclick="sendPrompt()">
@@ -1404,35 +1467,35 @@ All four provider nodes are <strong>HEALTHY // CLOSED</strong>. Click <strong>'S
     <div class="resilience-view">
       <div>
         <h1 class="page-title">Resilience &amp; Fault Injection</h1>
-        <p class="page-desc">Simulate live upstream provider outages (HTTP 429 rate limits, timeouts) and observe automatic fallback cascades with zero client errors.</p>
+        <p class="page-desc">Simulate upstream provider outages (HTTP 429 rate limits, timeouts) and observe automatic fallback cascades with zero client errors.</p>
       </div>
 
       <!-- Cascade Diagram -->
       <div class="cascade-diagram">
-        <div class="diag-title">Active Failover Cascade Pipeline</div>
+        <div class="diag-title">Failover Cascade Pipeline</div>
         <div class="diag-nodes" id="cascade-nodes">
           <div class="diag-node" id="node-OpenAI">
             <span class="diag-node-name">OpenAI</span>
-            <span class="diag-node-role">[01] PRIMARY &middot; GPT-4o</span>
-            <span class="diag-node-badge state-closed" id="badge-OpenAI">CLOSED</span>
+            <span class="diag-node-role">Primary &middot; GPT-4o</span>
+            <span class="diag-node-badge state-closed" id="badge-OpenAI">Healthy</span>
           </div>
           <div class="diag-arrow">&rarr;</div>
           <div class="diag-node" id="node-Anthropic">
             <span class="diag-node-name">Anthropic</span>
-            <span class="diag-node-role">[02] FALLBACK &middot; Claude 3.5 Sonnet</span>
-            <span class="diag-node-badge state-closed" id="badge-Anthropic">CLOSED</span>
+            <span class="diag-node-role">Fallback 1 &middot; Claude 3.5 Sonnet</span>
+            <span class="diag-node-badge state-closed" id="badge-Anthropic">Healthy</span>
           </div>
           <div class="diag-arrow">&rarr;</div>
           <div class="diag-node" id="node-GoogleGemini">
             <span class="diag-node-name">Google Gemini</span>
-            <span class="diag-node-role">[03] FALLBACK &middot; Gemini 1.5 Pro</span>
-            <span class="diag-node-badge state-closed" id="badge-GoogleGemini">CLOSED</span>
+            <span class="diag-node-role">Fallback 2 &middot; Gemini 1.5 Pro</span>
+            <span class="diag-node-badge state-closed" id="badge-GoogleGemini">Healthy</span>
           </div>
           <div class="diag-arrow">&rarr;</div>
           <div class="diag-node" id="node-DeepSeek">
             <span class="diag-node-name">DeepSeek</span>
-            <span class="diag-node-role">[04] FALLBACK &middot; DeepSeek V3</span>
-            <span class="diag-node-badge state-closed" id="badge-DeepSeek">CLOSED</span>
+            <span class="diag-node-role">Fallback 3 &middot; DeepSeek V3</span>
+            <span class="diag-node-badge state-closed" id="badge-DeepSeek">Healthy</span>
           </div>
         </div>
       </div>
@@ -1448,8 +1511,8 @@ All four provider nodes are <strong>HEALTHY // CLOSED</strong>. Click <strong>'S
   <section class="tab-content" id="view-tel">
     <div class="telemetry-view">
       <div>
-        <h1 class="page-title">Live Gateway Telemetry</h1>
-        <p class="page-desc">Production performance telemetry aggregated across all tenant requests. Prometheus text format available at <code style="font-family:'JetBrains Mono',monospace;color:var(--cyan);background:var(--card);padding:2px 6px;border-radius:4px;">/metrics</code>.</p>
+        <h1 class="page-title">Gateway Telemetry</h1>
+        <p class="page-desc">Aggregated latency distributions, token counts, and cost telemetry. Prometheus metrics available at <code style="font-family:'JetBrains Mono',monospace;color:var(--cyan);background:var(--card);padding:2px 6px;border-radius:4px;">/metrics</code>.</p>
       </div>
 
       <div class="kpi-row">
@@ -1460,15 +1523,17 @@ All four provider nodes are <strong>HEALTHY // CLOSED</strong>. Click <strong>'S
       </div>
 
       <div class="tail-latency-grid">
-        <div class="lat-card"><div class="lat-title">P50 Primary Latency</div><div class="lat-metric" style="color:var(--emerald)"><span id="tel-p50">165</span><span class="lat-unit">ms</span></div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">Median response time</div></div>
-        <div class="lat-card"><div class="lat-title">P95 Primary Latency</div><div class="lat-metric" style="color:var(--emerald)"><span id="tel-p95">245</span><span class="lat-unit">ms</span></div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">Clean non-fallback baseline</div></div>
-        <div class="lat-card"><div class="lat-title">P99 Tail Latency</div><div class="lat-metric" style="color:var(--amber)"><span id="tel-p99">310</span><span class="lat-unit">ms</span></div><div style="font-size:10px;color:var(--text-faint);margin-top:4px;">Complex query &amp; cold network</div></div>
+        <div class="lat-card"><div class="lat-title">P50 Primary Latency</div><div class="lat-metric" style="color:var(--emerald)"><span id="tel-p50">175</span><span class="lat-unit">ms</span></div><div style="font-size:10px;color:var(--text-dim);margin-top:4px;">Median response time</div></div>
+        <div class="lat-card"><div class="lat-title">P95 Primary Latency</div><div class="lat-metric" style="color:var(--emerald)"><span id="tel-p95">310</span><span class="lat-unit">ms</span></div><div style="font-size:10px;color:var(--text-dim);margin-top:4px;">Clean non-fallback baseline</div></div>
+        <div class="lat-card"><div class="lat-title">P99 Tail Latency</div><div class="lat-metric" style="color:var(--amber)"><span id="tel-p99">345</span><span class="lat-unit">ms</span></div><div style="font-size:10px;color:var(--text-dim);margin-top:4px;">Complex query &amp; cold network</div></div>
       </div>
 
       <div class="chart-section">
         <div class="chart-title">Recent Latency Distribution (ms)</div>
-        <div class="bar-chart" id="latency-bars">
-          <!-- Populated by JS -->
+        <div class="bar-chart-wrap">
+          <div class="bar-chart" id="latency-bars">
+            <!-- Populated by JS -->
+          </div>
         </div>
       </div>
     </div>
@@ -1476,13 +1541,13 @@ All four provider nodes are <strong>HEALTHY // CLOSED</strong>. Click <strong>'S
 
   <!-- ── LOGS TAB ── -->
   <section class="tab-content" id="view-logs">
-    <div style="padding:28px 36px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;">
+    <div style="padding:18px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;height:100%;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
           <h1 class="page-title">Gateway Request Logs</h1>
-          <p class="page-desc">Real-time audit log of executed, cached, and cascaded requests.</p>
+          <p class="page-desc">Audit log of direct, cached, and failover requests.</p>
         </div>
-        <button class="send-btn" style="height:38px;padding:0 18px;font-size:12px;" onclick="loadLogs()">Refresh</button>
+        <button class="send-btn" style="height:34px;padding:0 14px;font-size:11.5px;" onclick="loadLogs()">Refresh</button>
       </div>
       <div class="table-wrap">
         <table>
@@ -1499,7 +1564,7 @@ All four provider nodes are <strong>HEALTHY // CLOSED</strong>. Click <strong>'S
 
   <!-- ── TENANTS TAB ── -->
   <section class="tab-content" id="view-ten">
-    <div style="padding:28px 36px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;">
+    <div style="padding:18px 24px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;height:100%;">
       <div>
         <h1 class="page-title">Tenant Management &amp; Rate Limits</h1>
         <p class="page-desc">Multi-tenant isolation with token-bucket RPS, TPM quotas, and monthly dollar budget ceilings.</p>
@@ -1507,7 +1572,7 @@ All four provider nodes are <strong>HEALTHY // CLOSED</strong>. Click <strong>'S
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Tenant ID</th><th>Name</th><th>Tier</th><th>Requests</th><th>Tokens</th><th>Spend USD</th><th>RPS Limit</th><th>TPM Limit</th><th>Monthly Budget</th></tr>
+            <tr><th>Tenant ID</th><th>Name</th><th>Tier</th><th>API Key</th><th>Requests</th><th>Tokens</th><th>Spend USD</th><th>RPS Limit</th><th>TPM Limit</th><th>Monthly Budget</th></tr>
           </thead>
           <tbody id="tenants-tbody">
             <!-- Populated by JS -->
@@ -1533,10 +1598,25 @@ function switchTab(tab) {
   document.getElementById('view-' + tab).classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
   activeTab = tab;
+  closeSidebar();
   if (tab === 'res') loadResilience();
   if (tab === 'tel') loadTelemetry();
   if (tab === 'logs') loadLogs();
   if (tab === 'ten') loadTenants();
+}
+
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar-panel');
+  const backdrop = document.getElementById('drawer-backdrop');
+  const isOpen = sidebar.classList.toggle('drawer-open');
+  backdrop.classList.toggle('active', isOpen);
+}
+
+function closeSidebar() {
+  const sidebar = document.querySelector('.sidebar-panel');
+  const backdrop = document.getElementById('drawer-backdrop');
+  sidebar.classList.remove('drawer-open');
+  backdrop.classList.remove('active');
 }
 
 function toggleStructured() {
@@ -1548,7 +1628,7 @@ function toggleStructured() {
 function toggleStreaming() {
   streamingMode = !streamingMode;
   document.getElementById('sw-stream').classList.toggle('on', streamingMode);
-  showToast(streamingMode ? 'Real-time Streaming enabled' : 'Streaming disabled (buffered)');
+  showToast(streamingMode ? 'Streaming enabled' : 'Streaming disabled (buffered)');
 }
 
 function setPrompt(text) {
@@ -1568,7 +1648,7 @@ function showToast(msg) {
   const el = document.getElementById('toast');
   el.innerText = msg;
   el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2800);
+  setTimeout(() => el.classList.remove('show'), 2600);
 }
 
 function esc(s) {
@@ -1591,7 +1671,7 @@ async function sendPrompt() {
   // Append user message
   const userMsg = document.createElement('div');
   userMsg.className = 'msg user';
-  userMsg.innerHTML = '<div class="user-meta">CLIENT PROMPT // TIER-1 INGRESS</div><div class="bubble">' + esc(prompt) + '</div>';
+  userMsg.innerHTML = '<div class="user-meta">User</div><div class="bubble">' + esc(prompt) + '</div>';
   thread.appendChild(userMsg);
   input.value = '';
   btn.disabled = true;
@@ -1601,10 +1681,10 @@ async function sendPrompt() {
   botMsg.className = 'msg bot';
   botMsg.innerHTML = '<div class="bot-card">'
     + '<div class="bot-header">'
-    + '  <div class="bot-identity"><span class="provider-badge">ROUTING</span><span class="tag-badge tag-direct">EVALUATING</span></div>'
+    + '  <div class="bot-identity"><span class="provider-badge">Routing</span><span class="tag-badge tag-direct">Evaluating</span></div>'
     + '  <div class="bot-telemetry-meta"><span>evaluating...</span></div>'
     + '</div>'
-    + '<div class="bot-body" style="color:var(--text-dim);font-family:\'JetBrains Mono\',monospace;font-size:12px;">Dispatching request through provider mesh...</div>'
+    + '<div class="bot-body" style="color:var(--text-dim);font-family:\'JetBrains Mono\',monospace;font-size:12px;">Dispatching request...</div>'
     + '</div>';
   thread.appendChild(botMsg);
   thread.scrollTop = thread.scrollHeight;
@@ -1681,10 +1761,10 @@ async function sendPrompt() {
 
     let alertHtml = '';
     if (resp.was_fallback) {
-      alertHtml += '<div class="cascade-alert">▲ CASCADE FALLBACK: Primary ' + esc(resp.original_model) + ' circuit OPEN &rarr; Served by ' + esc(resp.provider) + ' (' + esc(resp.model) + ') in ' + resp.latency_ms + 'ms</div>';
+      alertHtml += '<div class="cascade-alert">▲ Failover: Primary ' + esc(resp.original_model) + ' circuit open &rarr; Served by ' + esc(resp.provider) + ' (' + esc(resp.model) + ') in ' + resp.latency_ms + 'ms</div>';
     }
     if (san && san.was_sanitized) {
-      alertHtml += '<div class="sanitized-alert">🛡 ZERO-TRUST PII REDACTED: [' + san.redacted_types.join(', ') + '] neutralized prior to upstream dispatch</div>';
+      alertHtml += '<div class="sanitized-alert">PII Redacted: [' + san.redacted_types.join(', ') + '] filtered prior to dispatch</div>';
     }
 
     botCard.innerHTML = '<div class="bot-header">'
@@ -1734,7 +1814,7 @@ async function refreshTelemetry() {
         const isClosed = b.state === 'CLOSED';
         const isHalf = b.state === 'HALF-OPEN';
         const cls = isClosed ? 'pill-closed' : (isHalf ? 'pill-half' : 'pill-open');
-        const stateLabel = isClosed ? 'HEALTHY // CLOSED' : (isHalf ? 'PROBING' : 'TRIPPED (429)');
+        const stateLabel = isClosed ? 'Healthy' : (isHalf ? 'Probing' : 'Degraded (429)');
         return '<div class="provider-pill ' + (isClosed ? '' : 'pill-active-alert') + '">'
           + '  <div class="pill-top">'
           + '    <span class="pill-name">' + esc(b.name) + '</span>'
@@ -1769,7 +1849,7 @@ async function loadResilience() {
       const node = document.getElementById('node-' + cleanId);
       if (badge && node) {
         badge.className = 'diag-node-badge ' + (b.state === 'CLOSED' ? 'state-closed' : (b.state === 'HALF-OPEN' ? 'state-half' : 'state-open'));
-        badge.innerText = b.state;
+        badge.innerText = b.state === 'CLOSED' ? 'Healthy' : (b.state === 'HALF-OPEN' ? 'Probing' : 'Degraded');
         node.classList.toggle('node-open', b.state !== 'CLOSED');
       }
     });
@@ -1780,22 +1860,22 @@ async function loadResilience() {
       const isTripped = b.state !== 'CLOSED';
       const isHalf = b.state === 'HALF-OPEN';
       const stateCls = b.state === 'CLOSED' ? 'state-closed' : (isHalf ? 'state-half' : 'state-open');
-      const stateText = b.state === 'CLOSED' ? 'HEALTHY // CLOSED' : (isHalf ? 'PROBING // HALF-OPEN' : 'TRIPPED // OPEN (429)');
+      const stateText = b.state === 'CLOSED' ? 'Healthy' : (isHalf ? 'Probing (Half-Open)' : 'Degraded (429)');
       const btnCls = b.has_simulated_error ? 'btn-restore' : 'btn-trip';
-      const btnText = b.has_simulated_error ? '▲ Restore Provider Upstream' : 'Simulate 429 Outage';
+      const btnText = b.has_simulated_error ? 'Reset Circuit Breaker' : 'Simulate 429 Outage';
       const targetState = !b.has_simulated_error;
       const cleanId = b.name.replace(/\s+/g, '');
 
       let errorHtml = '';
       if (b.last_error_msg) {
-        errorHtml = '<div class="error-banner">▲ Upstream Error: ' + esc(b.last_error_msg) + '</div>';
+        errorHtml = '<div class="error-banner">▲ Upstream Status: ' + esc(b.last_error_msg) + '</div>';
       } else {
-        errorHtml = '<div class="healthy-banner">Health checks passing &middot; zero active anomalies</div>';
+        errorHtml = '<div class="healthy-banner">Health checks passing &middot; 0 active anomalies</div>';
       }
 
       let countdownHtml = '';
       if (b.state === 'OPEN') {
-        countdownHtml = '<div class="countdown-box" id="cd-' + cleanId + '">⏱ Auto recovery probe in <span id="sec-' + cleanId + '">8</span>s...</div>';
+        countdownHtml = '<div class="countdown-box" id="cd-' + cleanId + '">Recovery probe in <span id="sec-' + cleanId + '">8</span>s...</div>';
       }
 
       return '<div class="p-card ' + (isTripped ? 'card-tripped' : '') + '" id="card-' + cleanId + '">'
@@ -1809,7 +1889,7 @@ async function loadResilience() {
         + '<div class="card-stats">'
         + '  <div class="stat-box"><span class="stat-lbl">Success Rate</span><span class="stat-num">' + b.success_rate_pct.toFixed(1) + '%</span></div>'
         + '  <div class="stat-box"><span class="stat-lbl">Last Latency</span><span class="stat-num">' + b.last_latency_ms + 'ms</span></div>'
-        + '  <div class="stat-box"><span class="stat-lbl">Lifetime Trips</span><span class="stat-num">' + b.total_trips + '</span></div>'
+        + '  <div class="stat-box"><span class="stat-lbl">Total Trips</span><span class="stat-num">' + b.total_trips + '</span></div>'
         + '  <div class="stat-box"><span class="stat-lbl">Consec. Fails</span><span class="stat-num" style="color:' + (b.consecutive_fails > 0 ? 'var(--amber-hero)' : 'inherit') + '">' + b.consecutive_fails + '</span></div>'
         + '</div>'
         + errorHtml
@@ -1854,7 +1934,7 @@ async function toggleChaos(provider, enabled) {
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({provider, enabled})
     });
-    showToast(enabled ? 'Simulated 429 Outage injected on ' + provider : provider + ' restored to healthy state');
+    showToast(enabled ? 'Simulated 429 Outage injected on ' + provider : provider + ' circuit reset to healthy state');
     await loadResilience();
     refreshTelemetry();
   } catch (e) {
@@ -1882,11 +1962,11 @@ async function loadTelemetry() {
     if (logs.length > 0) {
       const maxLat = Math.max(...logs.map(l => l.latency_ms), 1);
       barsContainer.innerHTML = logs.map(l => {
-        const height = Math.max(8, Math.round((l.latency_ms / maxLat) * 80));
+        const height = Math.max(8, Math.round((l.latency_ms / maxLat) * 65));
         let col = 'var(--emerald)';
         if (l.latency_ms > 300) col = 'var(--amber)';
         if (l.latency_ms > 700) col = 'var(--rose)';
-        return '<div class="bar-col" title="' + esc(l.model) + ': ' + l.latency_ms + 'ms">'
+        return '<div class="bar-col" title="' + esc(l.model) + ' (' + esc(l.provider) + '): ' + l.latency_ms + 'ms">'
           + '<div class="bar-fill" style="height:' + height + 'px;background:' + col + '"></div>'
           + '<div class="bar-lbl">' + l.latency_ms + '</div>'
           + '</div>';
@@ -1906,7 +1986,7 @@ async function loadLogs() {
     const tbody = document.getElementById('logs-tbody');
 
     if (!logs.length) {
-      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--text-faint);">No requests recorded yet.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--text-dim);">No requests recorded yet.</td></tr>';
       return;
     }
 
@@ -1921,7 +2001,7 @@ async function loadLogs() {
       const stClass = badgeMap[l.status] || 'st-success';
       const timeStr = new Date(l.timestamp).toLocaleTimeString();
       return '<tr>'
-        + '<td class="td-mono" style="color:var(--text-faint)">' + timeStr + '</td>'
+        + '<td class="td-mono" style="color:var(--text-dim)">' + timeStr + '</td>'
         + '<td class="td-pri">' + esc(l.model) + '</td>'
         + '<td>' + esc(l.provider) + '</td>'
         + '<td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + esc(l.prompt_summary) + '</td>'
@@ -1948,6 +2028,7 @@ async function loadTenants() {
       + '<td class="td-mono td-pri">' + esc(t.id) + '</td>'
       + '<td class="td-pri">' + esc(t.name) + '</td>'
       + '<td><span class="status-pill st-cached">' + t.tier + '</span></td>'
+      + '<td class="td-mono" style="color:var(--text-dim)"><span style="font-family:monospace">nx-live-***-9a4f</span></td>'
       + '<td class="td-mono">' + (t.total_requests || 0).toLocaleString() + '</td>'
       + '<td class="td-mono">' + (t.total_tokens || 0).toLocaleString() + '</td>'
       + '<td class="td-mono">$' + (t.total_spent_usd || 0).toFixed(4) + '</td>'
@@ -1974,7 +2055,7 @@ function initSSE() {
     source.addEventListener('fallback', e => {
       try {
         const d = JSON.parse(e.data);
-        showToast('Cascade: ' + d.requested_model + ' ➔ ' + d.served_provider + ' (' + d.latency_ms + 'ms)');
+        showToast('Failover: ' + d.requested_model + ' ➔ ' + d.served_provider + ' (' + d.latency_ms + 'ms)');
         if (activeTab === 'res') loadResilience();
         if (activeTab === 'logs') loadLogs();
         refreshTelemetry();
