@@ -1,28 +1,8 @@
-version: '3.8'
-
 services:
-  nexusllm:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: nexusllm-gateway
-    restart: unless-stopped
+  nexus-gateway:
+    build: .
     ports:
       - "8082:8082"
+    restart: unless-stopped
     environment:
       - PORT=8082
-      # Optional: set real upstream provider API keys
-      # - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      # - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      # - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      # - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:8082/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 3
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"

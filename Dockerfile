@@ -1,28 +1,21 @@
+# Build stage
 FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
-
-# Copy go module files
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy source tree
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /nexusllm ./cmd/server
 
-# Build statically linked binary
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -ldflags="-w -s" -o nexusllm ./cmd/server
+# Final stage
+FROM alpine:3.20
 
-# Final scratch/alpine runner
-FROM alpine:3.19
-
-RUN apk --no-cache add ca-certificates tzdata
+RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
-COPY --from=builder /app/nexusllm .
+COPY --from=builder /nexusllm .
 
 EXPOSE 8082
 
-HEALTHCHECK --interval=15s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8082/health || exit 1
-
-ENTRYPOINT ["./nexusllm"]
+CMD ["./nexusllm"]
