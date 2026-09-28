@@ -105,9 +105,9 @@ func (t *Telemetry) GetSnapshot() Snapshot {
 		sort.Slice(sorted, func(i, j int) bool { return sorted[i] < sorted[j] })
 
 		n := len(sorted)
-		p50 = sorted[int(float64(n)*0.50)]
-		p95 = sorted[int(float64(n)*0.95)]
-		p99 = sorted[int(float64(n)*0.99)]
+		p50 = sorted[int(float64(n-1)*0.50)]
+		p95 = sorted[int(float64(n-1)*0.95)]
+		p99 = sorted[int(float64(n-1)*0.99)]
 	}
 
 	totalCache := t.CacheHits + t.CacheMisses

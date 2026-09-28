@@ -780,26 +780,26 @@ const dashboardHTML = `<!DOCTYPE html>
 <style>
 :root{
   --bg:#07090e;
-  --surface:#0c1018;
-  --panel:#101522;
-  --panel-hover:#151c2d;
-  --card:#121826;
-  --card-subtle:#0e131f;
-  --border:rgba(255,255,255,0.08);
-  --border-subtle:rgba(255,255,255,0.04);
-  --border-strong:rgba(255,255,255,0.16);
+  --surface:#0a0e17;
+  --panel:#0f1523;
+  --panel-hover:#141c2e;
+  --card:#111828;
+  --card-subtle:#0d1320;
+  --border:rgba(255,255,255,0.07);
+  --border-subtle:rgba(255,255,255,0.035);
+  --border-strong:rgba(255,255,255,0.15);
   --text-main:#f8fafc;
   --text-secondary:#cbd5e1;
   --text-muted:#8492a6;
-  --text-dim:#4b5563;
+  --text-dim:#526075;
 
   /* Primary interactive chrome: authoritative steel blue */
-  --primary:#3b82f6;
-  --primary-hover:#2563eb;
-  --primary-glow:rgba(59,130,246,0.18);
+  --primary:#2563eb;
+  --primary-hover:#1d4ed8;
+  --primary-glow:rgba(37,99,235,0.22);
 
   /* Quiet Healthy: calm, dignified slate with subtle emerald dot */
-  --healthy-bg:rgba(255,255,255,0.03);
+  --healthy-bg:rgba(255,255,255,0.035);
   --healthy-border:rgba(255,255,255,0.08);
   --healthy-text:#94a3b8;
   --healthy-dot:#10b981;
@@ -807,20 +807,20 @@ const dashboardHTML = `<!DOCTYPE html>
   /* HERO Failover / Outage Accent: hero amber/orange (commands focus) */
   --amber:#f59e0b;
   --amber-hero:#fbbf24;
-  --amber-bg:rgba(245,158,11,0.12);
-  --amber-border:rgba(245,158,11,0.35);
+  --amber-bg:rgba(245,158,11,0.10);
+  --amber-border:rgba(245,158,11,0.38);
 
   /* Critical Trip / Error Accent */
   --rose:#ef4444;
   --rose-bg:rgba(239,68,68,0.10);
   --rose-border:rgba(239,68,68,0.28);
 
-  /* Cyan & Violet restrained to quiet utility tags */
   --cyan:#0ea5e9;
+  --emerald:#10b981;
   --violet:#8b5cf6;
 
-  --r-xs:4px;
-  --r-sm:6px;
+  --r-xs:3px;
+  --r-sm:5px;
   --r-md:8px;
   --r-lg:12px;
 }
@@ -829,115 +829,143 @@ body{
   font-family:'Inter',system-ui,-apple-system,sans-serif;
   background:var(--bg);
   color:var(--text-main);
-  min-height:100vh;
+  height:100vh;
   display:flex;
   flex-direction:column;
-  overflow-x:hidden;
+  overflow:hidden;
   -webkit-font-smoothing:antialiased;
 }
 
 /* ── Top Bar ── */
 .topbar{
-  height:54px;
-  background:rgba(8,10,16,0.96);
+  height:50px;
+  background:rgba(8,11,18,0.96);
   backdrop-filter:blur(16px);
   border-bottom:1px solid var(--border);
   display:flex;
   align-items:center;
   justify-content:space-between;
-  padding:0 20px;
+  padding:0 18px;
   position:sticky;
   top:0;
   z-index:100;
+  flex-shrink:0;
 }
-.brand{display:flex;align-items:center;gap:12px;text-decoration:none;}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
 .brand-glyph{
   width:32px;height:32px;border-radius:var(--r-sm);
-  background:rgba(255,255,255,0.03);border:1px solid var(--border-strong);
+  background:rgba(37,99,235,0.06);border:1px solid rgba(59,130,246,0.32);
   display:flex;align-items:center;justify-content:center;
-  transition:border-color 0.2s;
+  transition:all 0.18s ease;
 }
-.brand:hover .brand-glyph{border-color:var(--primary);}
+.brand:hover .brand-glyph{border-color:var(--primary);background:rgba(37,99,235,0.14);box-shadow:0 0 12px rgba(59,130,246,0.25);}
 .brand-text-col{display:flex;flex-direction:column;gap:1px;}
 .brand-title{
-  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:14px;
-  letter-spacing:0.4px;color:#fff;display:flex;align-items:center;gap:4px;line-height:1.2;
+  font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:13.5px;
+  letter-spacing:0.8px;color:#fff;display:flex;align-items:center;gap:4px;line-height:1.2;
 }
-.brand-subtext{font-weight:500;color:var(--text-muted);letter-spacing:0.8px;}
+.brand-subtext{font-weight:600;color:#60a5fa;letter-spacing:0.8px;}
 .brand-meta{
-  font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;
-  letter-spacing:0.8px;color:var(--text-dim);line-height:1;
+  font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:600;
+  letter-spacing:0.8px;color:var(--text-dim);line-height:1;display:flex;align-items:center;gap:5px;
 }
+.meta-dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:#10b981;box-shadow:0 0 5px rgba(16,185,129,0.7);}
 
 .nav{display:flex;gap:2px;background:rgba(255,255,255,0.02);padding:2px;border-radius:var(--r-sm);border:1px solid var(--border);}
 .nav-tab{
-  padding:6px 14px;border-radius:var(--r-xs);font-size:12px;font-weight:600;
-  color:var(--text-muted);background:transparent;border:none;cursor:pointer;
-  transition:all 0.12s ease;display:flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:var(--r-xs);font-size:11.5px;font-weight:600;
+  color:var(--text-muted);background:transparent;border:1px solid transparent;cursor:pointer;
+  transition:all 0.12s ease;display:flex;align-items:center;gap:5px;
 }
-.nav-tab:hover{color:var(--text-main);background:rgba(255,255,255,0.03);}
-.nav-tab.active{background:var(--card);color:#fff;border:1px solid var(--border-strong);box-shadow:0 1px 3px rgba(0,0,0,0.4);}
+.nav-tab:hover{color:var(--text-main);background:rgba(255,255,255,0.035);}
+.nav-tab.active{background:var(--card);color:#fff;border-color:var(--border-strong);box-shadow:0 1px 3px rgba(0,0,0,0.5);}
+.tab-icon{font-size:12px;opacity:0.85;}
 
 .top-right{display:flex;align-items:center;gap:10px;}
 .live-badge{
   display:flex;align-items:center;gap:6px;
-  padding:4px 10px;border-radius:99px;
-  background:rgba(255,255,255,0.03);border:1px solid var(--border);
-  font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:500;color:var(--text-secondary);
+  padding:3px 9px;border-radius:var(--r-xs);
+  background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.22);
+  font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.5px;color:#34d399;
 }
-.live-dot{width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 6px rgba(16,185,129,0.6);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 6px rgba(16,185,129,0.8);animation:beaconPulse 2s infinite;}
+@keyframes beaconPulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
 
 /* ── Pages Layout ── */
-.main-view{flex:1;display:flex;flex-direction:column;position:relative;}
-.tab-content{display:none;flex:1;flex-direction:column;}
+.main-view{flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;}
+.tab-content{display:none;flex:1;height:calc(100vh - 50px);overflow:hidden;}
 .tab-content.active{display:flex;}
 
 /* ── Playground Layout ── */
-.play-layout{display:flex;flex:1;height:calc(100vh - 54px);}
+.play-layout{display:flex;flex:1;width:100%;height:100%;}
 .sidebar-panel{
-  width:270px;flex-shrink:0;border-right:1px solid var(--border);
+  width:280px;flex-shrink:0;border-right:1px solid var(--border);
   background:var(--surface);display:flex;flex-direction:column;
   overflow-y:auto;
 }
-.side-block{padding:14px 16px;border-bottom:1px solid var(--border);}
-.side-title{font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
-.metric-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.02);}
+.side-block{padding:12px 14px;border-bottom:1px solid var(--border);}
+.side-title{
+  font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;
+  letter-spacing:0.8px;text-transform:uppercase;color:var(--text-dim);
+  margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;
+}
+.side-badge{
+  font-size:8.5px;font-family:'JetBrains Mono',monospace;font-weight:600;
+  background:rgba(255,255,255,0.04);border:1px solid var(--border);padding:1px 5px;border-radius:2px;color:var(--text-dim);
+}
+.metric-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11.5px;border-bottom:1px solid rgba(255,255,255,0.02);}
 .metric-row:last-child{border-bottom:none;}
-.metric-label{color:var(--text-muted);}
-.metric-val{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text-main);}
+.metric-label{color:var(--text-muted);font-size:11px;}
+.metric-val{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;color:var(--text-main);}
 
+/* Redesigned Structured Provider Pills in Sidebar */
 .provider-pill{
-  display:flex;align-items:center;justify-content:space-between;
+  display:flex;flex-direction:column;gap:5px;
   padding:8px 10px;border-radius:var(--r-sm);background:var(--panel);
-  border:1px solid var(--border);margin-bottom:6px;font-size:12px;
-  transition:border-color 0.15s;
+  border:1px solid var(--border);margin-bottom:6px;transition:border-color 0.15s;
 }
 .provider-pill:last-child{margin-bottom:0;}
-.pill-name{font-weight:600;color:var(--text-main);font-size:12px;}
+.provider-pill:hover{border-color:var(--border-strong);}
+.provider-pill.pill-active-alert{border-color:var(--amber-border);background:rgba(245,158,11,0.04);}
+.pill-top{display:flex;justify-content:space-between;align-items:center;}
+.pill-name{font-weight:700;color:var(--text-main);font-size:12px;}
 .pill-status{
-  font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.4px;
-  padding:2px 7px;border-radius:var(--r-xs);text-transform:uppercase;display:flex;align-items:center;gap:4px;
+  font-size:8.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.4px;
+  padding:2px 6px;border-radius:var(--r-xs);text-transform:uppercase;display:flex;align-items:center;gap:4px;
 }
-/* Quiet Healthy Pill */
 .pill-closed{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);}
 .pill-closed::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#10b981;}
-/* High-contrast HERO Tripped Pill */
-.pill-open{background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);animation:subtlePulse 2s infinite;}
-.pill-half{background:rgba(245,158,11,0.08);color:var(--amber);border:1px solid rgba(245,158,11,0.22);}
-@keyframes subtlePulse{0%,100%{opacity:1;}50%{opacity:0.6;}}
+.pill-open{background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);animation:subtlePulse 1.8s infinite;}
+.pill-half{background:rgba(245,158,11,0.08);color:var(--amber);border:1px solid rgba(245,158,11,0.25);}
+.pill-metrics{
+  display:flex;align-items:center;gap:6px;font-size:10px;
+  font-family:'JetBrains Mono',monospace;
+}
+.pm-item{display:flex;align-items:center;gap:3px;}
+.pm-lbl{color:var(--text-dim);font-weight:600;}
+.pm-val{color:var(--text-secondary);font-weight:700;}
+.pm-sep{color:var(--text-dim);opacity:0.5;}
 
-/* Chat Central — High Information Density */
-.chat-center{flex:1;display:flex;flex-direction:column;background:var(--bg);}
+/* Fallback order block */
+.fallback-sideblock{background:rgba(37,99,235,0.03);}
+.fallback-hdr{display:flex;align-items:center;gap:6px;font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
+.fallback-chain-flow{display:flex;align-items:center;gap:4px;font-size:10px;font-family:'JetBrains Mono',monospace;flex-wrap:wrap;}
+.flow-node{padding:2px 5px;background:var(--panel);border:1px solid var(--border);border-radius:2px;color:var(--text-secondary);}
+.flow-node.active{border-color:rgba(59,130,246,0.4);color:#93c5fd;}
+.flow-arrow{color:var(--text-dim);}
+
+/* Chat Central — Dense Engineering Console */
+.chat-center{flex:1;display:flex;flex-direction:column;background:var(--bg);height:100%;overflow:hidden;}
 .chat-header{
-  padding:10px 20px;border-bottom:1px solid var(--border);
+  padding:8px 18px;border-bottom:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;
-  background:var(--surface);
+  background:var(--surface);flex-shrink:0;
 }
 .model-picker{display:flex;align-items:center;gap:8px;}
-.picker-lbl{font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;}
+.picker-lbl{font-size:10.5px;font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;}
 .select-input{
   background:var(--panel);color:#fff;border:1px solid var(--border-strong);
-  padding:6px 12px;border-radius:var(--r-xs);font-size:12px;font-weight:600;
+  padding:5px 10px;border-radius:var(--r-xs);font-size:11.5px;font-weight:600;
   outline:none;cursor:pointer;transition:border-color 0.15s;
 }
 .select-input:focus{border-color:var(--primary);}
@@ -947,54 +975,56 @@ body{
   color:var(--text-muted);cursor:pointer;user-select:none;
 }
 .switch-track{
-  width:32px;height:18px;border-radius:99px;background:var(--panel);
+  width:30px;height:16px;border-radius:99px;background:var(--panel);
   border:1px solid var(--border-strong);position:relative;transition:all 0.15s;
 }
 .switch-track.on{background:var(--primary);border-color:transparent;}
 .switch-thumb{
-  width:12px;height:12px;border-radius:50%;background:#fff;
+  width:10px;height:10px;border-radius:50%;background:#fff;
   position:absolute;top:2px;left:2px;transition:all 0.15s;
 }
 .switch-track.on .switch-thumb{transform:translateX(14px);}
 
 /* Message Thread — Clean Engineering Console */
-.thread{flex:1;overflow-y:auto;padding:18px 24px;display:flex;flex-direction:column;gap:14px;}
-.msg{display:flex;flex-direction:column;gap:4px;animation:msgIn 0.15s ease-out;}
-@keyframes msgIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
-.msg.user{align-self:flex-end;max-width:80%;}
+.thread{flex:1;overflow-y:auto;padding:12px 18px;display:flex;flex-direction:column;gap:8px;}
+.msg{display:flex;flex-direction:column;gap:3px;animation:msgIn 0.15s ease-out;}
+@keyframes msgIn{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:translateY(0);}}
+.msg.user{align-self:flex-end;max-width:82%;}
 .msg.bot{align-self:stretch;}
 
-.msg.user .bubble{
-  background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.22);
-  color:#fff;padding:10px 14px;border-radius:var(--r-md);font-size:13.5px;line-height:1.55;
-  white-space:pre-wrap;word-break:break-word;
+.msg.user .user-meta{
+  font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.5px;
+  color:var(--text-dim);text-align:right;text-transform:uppercase;
 }
-.msg.user .msg-author{
-  font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:600;letter-spacing:0.5px;
-  color:var(--text-dim);text-align:right;margin-bottom:3px;text-transform:uppercase;
+.msg.user .bubble{
+  background:rgba(37,99,235,0.08);border:1px solid rgba(59,130,246,0.26);
+  border-left:2px solid var(--primary);
+  color:#fff;padding:8px 12px;border-radius:var(--r-sm);font-size:13px;line-height:1.52;
+  white-space:pre-wrap;word-break:break-word;
 }
 
 /* Bot Console Card */
 .bot-card{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-md);overflow:hidden;transition:border-color 0.15s;
+  border-left:2px solid rgba(255,255,255,0.18);
+  border-radius:var(--r-sm);overflow:hidden;transition:border-color 0.15s;
 }
 .bot-card:hover{border-color:var(--border-strong);}
 .bot-header{
-  padding:8px 14px;background:rgba(255,255,255,0.015);border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  padding:6px 12px;background:rgba(255,255,255,0.015);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;
 }
-.bot-identity{display:flex;align-items:center;gap:8px;}
+.bot-identity{display:flex;align-items:center;gap:6px;}
 .provider-badge{
-  font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;
-  color:#fff;display:flex;align-items:center;gap:6px;
+  font-size:10.5px;font-weight:700;font-family:'JetBrains Mono',monospace;
+  color:#fff;display:flex;align-items:center;gap:5px;
 }
 .provider-badge::before{
-  content:'';display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;
+  content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:#10b981;
 }
 .tag-badge{
-  font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:700;
-  letter-spacing:0.5px;padding:2px 6px;border-radius:var(--r-xs);text-transform:uppercase;
+  font-size:8.5px;font-family:'JetBrains Mono',monospace;font-weight:700;
+  letter-spacing:0.5px;padding:2px 5px;border-radius:var(--r-xs);text-transform:uppercase;
 }
 .tag-direct{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);}
 .tag-stream{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);}
@@ -1002,148 +1032,151 @@ body{
 .tag-fallback{background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);font-weight:800;}
 
 .bot-telemetry-meta{
-  display:flex;align-items:center;gap:8px;font-size:11px;font-family:'JetBrains Mono',monospace;
+  display:flex;align-items:center;gap:6px;font-size:10.5px;font-family:'JetBrains Mono',monospace;
   color:var(--text-muted);
 }
+.meta-lbl{color:var(--text-dim);font-weight:600;}
+.meta-sep{color:var(--text-dim);opacity:0.4;}
 .bot-body{
-  padding:14px 16px;font-size:13.5px;line-height:1.6;color:var(--text-main);
+  padding:11px 14px;font-size:13px;line-height:1.56;color:var(--text-main);
   white-space:pre-wrap;word-break:break-word;
 }
 
 /* Fallback & Sanitization alerts within card */
 .cascade-alert{
   background:var(--amber-bg);border-bottom:1px solid var(--amber-border);
-  padding:8px 14px;font-size:11.5px;font-weight:600;color:var(--amber-hero);
-  display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;
+  padding:7px 12px;font-size:11px;font-weight:600;color:var(--amber-hero);
+  display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;
 }
 .sanitized-alert{
   background:rgba(255,255,255,0.02);border-bottom:1px solid var(--border);
-  padding:6px 14px;font-size:11px;font-weight:500;color:var(--text-muted);
-  display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;
+  padding:5px 12px;font-size:10.5px;font-weight:500;color:var(--text-muted);
+  display:flex;align-items:center;gap:5px;font-family:'JetBrains Mono',monospace;
 }
 
-/* Quick Prompts Bar */
-.prompts-bar{
-  padding:8px 20px;border-top:1px solid var(--border);
-  display:flex;gap:6px;overflow-x:auto;background:var(--surface);scrollbar-width:none;
+/* Integrated Command Center Dock */
+.console-dock{
+  border-top:1px solid var(--border);background:var(--surface);
+  display:flex;flex-direction:column;flex-shrink:0;
 }
-.prompts-bar::-webkit-scrollbar{display:none;}
+.dock-quick-prompts{
+  padding:6px 16px;border-bottom:1px solid var(--border-subtle);
+  display:flex;align-items:center;gap:5px;overflow-x:auto;scrollbar-width:none;
+}
+.dock-quick-prompts::-webkit-scrollbar{display:none;}
+.dock-prompts-label{
+  font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:700;
+  color:var(--text-dim);text-transform:uppercase;letter-spacing:0.6px;margin-right:2px;white-space:nowrap;
+}
 .prompt-chip{
-  flex-shrink:0;padding:5px 10px;border-radius:var(--r-xs);
+  flex-shrink:0;padding:3px 8px;border-radius:var(--r-xs);
   background:var(--panel);border:1px solid var(--border);
-  font-size:11px;font-weight:500;color:var(--text-muted);cursor:pointer;
+  font-size:10.5px;font-weight:500;color:var(--text-muted);cursor:pointer;
   transition:all 0.12s;white-space:nowrap;
 }
 .prompt-chip:hover{border-color:var(--border-strong);color:#fff;background:var(--panel-hover);}
-.prompt-chip .chip-cat{color:var(--text-dim);margin-right:4px;font-family:'JetBrains Mono',monospace;font-size:10px;}
+.prompt-chip .chip-cat{color:var(--text-dim);margin-right:4px;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;}
 
-/* Chat Input Bar */
-.chat-input-bar{
-  padding:12px 20px;border-top:1px solid var(--border);
-  display:flex;gap:10px;background:var(--surface);align-items:flex-end;
+.dock-input-row{
+  padding:8px 16px 10px 16px;display:flex;gap:8px;align-items:flex-end;
 }
-.input-wrap{flex:1;display:flex;flex-direction:column;gap:4px;}
+.input-wrap{flex:1;display:flex;flex-direction:column;gap:3px;}
 .text-area{
   width:100%;background:var(--panel);border:1px solid var(--border-strong);
-  border-radius:var(--r-sm);padding:10px 14px;color:#fff;
-  font-family:'Inter',sans-serif;font-size:13.5px;resize:none;
-  outline:none;line-height:1.5;min-height:42px;max-height:120px;
+  border-radius:var(--r-xs);padding:8px 12px;color:#fff;
+  font-family:'Inter',sans-serif;font-size:13px;resize:none;
+  outline:none;line-height:1.45;min-height:38px;max-height:110px;
   transition:border-color 0.15s;
 }
 .text-area:focus{border-color:var(--primary);box-shadow:0 0 0 1px var(--primary);}
-.input-hint{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);display:flex;justify-content:space-between;}
+.input-hint{font-size:9.5px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);display:flex;justify-content:space-between;align-items:center;}
+.route-indicator-pill{font-weight:600;color:#60a5fa;}
 .send-btn{
-  height:42px;padding:0 18px;border-radius:var(--r-sm);
+  height:38px;padding:0 16px;border-radius:var(--r-xs);
   background:var(--primary);color:#fff;font-family:'Plus Jakarta Sans',sans-serif;
-  font-size:13px;font-weight:700;border:none;cursor:pointer;
-  transition:all 0.12s;display:flex;align-items:center;gap:6px;
+  font-size:12.5px;font-weight:700;border:none;cursor:pointer;
+  transition:all 0.12s;display:flex;align-items:center;gap:6px;flex-shrink:0;
 }
 .send-btn:hover{background:var(--primary-hover);}
 .send-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-kbd{
+  font-size:10px;font-family:'JetBrains Mono',monospace;background:rgba(255,255,255,0.16);
+  padding:1px 4px;border-radius:2px;font-weight:700;
+}
 
 /* ── Resilience Page ── */
-.resilience-view{padding:24px 32px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;}
-.page-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:20px;font-weight:800;letter-spacing:-0.4px;color:#fff;}
-.page-desc{font-size:12.5px;color:var(--text-muted);margin-top:4px;line-height:1.5;}
+.resilience-view{padding:20px 28px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;height:100%;}
+.page-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;font-weight:800;letter-spacing:-0.4px;color:#fff;}
+.page-desc{font-size:12px;color:var(--text-muted);margin-top:2px;line-height:1.45;}
 
 /* Visual Cascade Diagram */
 .cascade-diagram{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-md);padding:16px 20px;
+  border-radius:var(--r-sm);padding:14px 18px;
 }
-.diag-title{font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;}
-.diag-nodes{display:flex;align-items:center;gap:10px;overflow-x:auto;}
+.diag-title{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.diag-nodes{display:flex;align-items:center;gap:8px;overflow-x:auto;}
 .diag-node{
-  padding:10px 14px;border-radius:var(--r-sm);background:var(--panel);
-  border:1px solid var(--border);display:flex;flex-direction:column;gap:3px;
-  min-width:160px;position:relative;transition:all 0.15s;
+  padding:8px 12px;border-radius:var(--r-xs);background:var(--panel);
+  border:1px solid var(--border);display:flex;flex-direction:column;gap:2px;
+  min-width:150px;position:relative;transition:all 0.15s;
 }
 .diag-node.node-open{border-color:var(--amber);background:var(--amber-bg);}
-.diag-node-name{font-weight:700;font-size:13px;color:#fff;}
-.diag-node-role{font-size:10px;color:var(--text-muted);}
+.diag-node-name{font-weight:700;font-size:12.5px;color:#fff;}
+.diag-node-role{font-size:9.5px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
 .diag-node-badge{
-  position:absolute;top:8px;right:8px;font-size:8px;font-family:'JetBrains Mono',monospace;font-weight:700;
-  padding:2px 5px;border-radius:var(--r-xs);text-transform:uppercase;
+  position:absolute;top:6px;right:6px;font-size:7.5px;font-family:'JetBrains Mono',monospace;font-weight:700;
+  padding:1px 4px;border-radius:2px;text-transform:uppercase;
 }
-.diag-arrow{color:var(--text-dim);font-size:16px;}
+.diag-arrow{color:var(--text-dim);font-size:14px;}
 
 /* Provider Cards Grid */
-.cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.cards-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
 .p-card{
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--r-md);padding:18px 20px;display:flex;flex-direction:column;
-  gap:14px;transition:all 0.15s;position:relative;
+  border-radius:var(--r-sm);padding:14px 16px;display:flex;flex-direction:column;
+  gap:10px;transition:all 0.15s;position:relative;
 }
 .p-card:hover{border-color:var(--border-strong);}
-/* High-visibility HERO Tripped Card Outline */
-.p-card.card-tripped{border-color:var(--amber);background:rgba(245,158,11,0.03);box-shadow:0 0 20px rgba(245,158,11,0.08);}
+.p-card.card-tripped{border-color:var(--amber);background:rgba(245,158,11,0.03);box-shadow:0 0 16px rgba(245,158,11,0.08);}
 
 .card-header{display:flex;justify-content:space-between;align-items:flex-start;}
-.card-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:15px;color:#fff;}
-.card-meta{font-size:11px;color:var(--text-muted);margin-top:2px;font-family:'JetBrains Mono',monospace;}
+.card-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:14px;color:#fff;}
+.card-meta{font-size:10.5px;color:var(--text-muted);margin-top:1px;font-family:'JetBrains Mono',monospace;}
 
-/* Strong Scannable State Badges */
 .card-state{
-  font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.5px;
-  padding:4px 10px;border-radius:var(--r-xs);text-transform:uppercase;display:flex;align-items:center;gap:5px;
+  font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.4px;
+  padding:3px 8px;border-radius:var(--r-xs);text-transform:uppercase;display:flex;align-items:center;gap:4px;
 }
-.state-closed{
-  background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);
-}
-.state-closed::before{content:'●';color:#10b981;font-size:10px;}
-.state-open{
-  background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);font-weight:800;animation:subtlePulse 1.8s infinite;
-}
-.state-open::before{content:'▲';color:var(--amber-hero);font-size:9px;}
-.state-half{
-  background:rgba(245,158,11,0.08);color:var(--amber);border:1px solid rgba(245,158,11,0.25);
-}
-.state-half::before{content:'◌';color:var(--amber);font-size:10px;}
+.state-closed{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);}
+.state-closed::before{content:'●';color:#10b981;font-size:9px;}
+.state-open{background:var(--amber-bg);color:var(--amber-hero);border:1px solid var(--amber-border);font-weight:800;animation:subtlePulse 1.8s infinite;}
+.state-open::before{content:'▲';color:var(--amber-hero);font-size:8px;}
+.state-half{background:rgba(245,158,11,0.08);color:var(--amber);border:1px solid rgba(245,158,11,0.25);}
+.state-half::before{content:'◌';color:var(--amber);font-size:9px;}
 
-/* Compact 4-box secondary metrics */
-.card-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;background:rgba(255,255,255,0.015);padding:10px;border-radius:var(--r-sm);border:1px solid var(--border-subtle);}
-.stat-box{display:flex;flex-direction:column;gap:2px;}
-.stat-lbl{font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-dim);}
-.stat-num{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:600;color:var(--text-secondary);}
+.card-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:rgba(255,255,255,0.015);padding:8px 10px;border-radius:var(--r-xs);border:1px solid var(--border-subtle);}
+.stat-box{display:flex;flex-direction:column;gap:1px;}
+.stat-lbl{font-size:8.5px;font-family:'JetBrains Mono',monospace;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-dim);}
+.stat-num{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;color:#fff;}
 
 .error-banner{
   background:var(--amber-bg);border:1px solid var(--amber-border);
-  border-radius:var(--r-xs);padding:7px 10px;font-size:11px;font-family:'JetBrains Mono',monospace;
-  color:var(--amber-hero);line-height:1.4;
+  border-radius:var(--r-xs);padding:6px 9px;font-size:10.5px;font-family:'JetBrains Mono',monospace;
+  color:var(--amber-hero);line-height:1.35;
 }
 .healthy-banner{
-  font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);padding:2px 0;display:flex;align-items:center;gap:6px;
+  font-size:10.5px;font-family:'JetBrains Mono',monospace;color:var(--text-muted);padding:1px 0;display:flex;align-items:center;gap:5px;
 }
 .healthy-banner::before{content:'✓';color:#10b981;}
 .countdown-box{
-  font-size:11px;font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--amber-hero);display:flex;align-items:center;gap:6px;
+  font-size:10.5px;font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--amber-hero);display:flex;align-items:center;gap:5px;
 }
 
-/* Action Buttons */
 .fault-btn{
-  padding:8px 14px;border-radius:var(--r-xs);border:none;cursor:pointer;
-  font-family:'Inter',sans-serif;font-size:12px;font-weight:600;
-  display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:7px 12px;border-radius:var(--r-xs);border:none;cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:11.5px;font-weight:600;
+  display:flex;align-items:center;justify-content:center;gap:5px;
   transition:all 0.12s;
 }
 .btn-trip{background:transparent;color:var(--text-muted);border:1px solid var(--border-strong);}
@@ -1152,52 +1185,52 @@ body{
 .btn-restore:hover{background:var(--amber-hero);}
 
 /* ── Telemetry Page ── */
-.telemetry-view{padding:24px 32px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;}
-.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.telemetry-view{padding:20px 28px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;height:100%;}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .kpi-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);
-  padding:16px 18px;display:flex;flex-direction:column;gap:6px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:14px 16px;display:flex;flex-direction:column;gap:4px;
 }
-.kpi-label{font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text-dim);}
-.kpi-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:24px;font-weight:800;letter-spacing:-0.5px;color:#fff;}
-.kpi-sub{font-size:11px;color:var(--text-muted);}
+.kpi-label{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text-dim);}
+.kpi-val{font-family:'Plus Jakarta Sans',sans-serif;font-size:22px;font-weight:800;letter-spacing:-0.5px;color:#fff;}
+.kpi-sub{font-size:10.5px;color:var(--text-muted);}
 
-.tail-latency-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.tail-latency-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .lat-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);
-  padding:16px;text-align:center;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:14px;text-align:center;
 }
-.lat-title{font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px;}
-.lat-metric{font-family:'Plus Jakarta Sans',sans-serif;font-size:30px;font-weight:800;letter-spacing:-0.8px;color:#fff;}
-.lat-unit{font-size:13px;font-weight:500;color:var(--text-muted);margin-left:3px;}
+.lat-title{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.7px;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;}
+.lat-metric{font-family:'Plus Jakarta Sans',sans-serif;font-size:26px;font-weight:800;letter-spacing:-0.6px;color:#fff;}
+.lat-unit{font-size:12px;font-weight:500;color:var(--text-muted);margin-left:2px;}
 
-.chart-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);padding:18px 20px;}
-.chart-title{font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:14px;}
-.bar-chart{display:flex;align-items:flex-end;gap:6px;height:80px;}
-.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.chart-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 16px;}
+.chart-title{font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:75px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
 .bar-fill{width:100%;border-radius:2px 2px 0 0;min-height:4px;transition:height 0.3s ease;}
-.bar-lbl{font-size:8.5px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);}
+.bar-lbl{font-size:8px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);}
 
 /* ── Logs & Tenants Tables ── */
 .table-wrap{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-md);
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-sm);
   overflow:hidden;
 }
-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
 th{
-  text-align:left;padding:10px 16px;font-size:10px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.6px;
+  text-align:left;padding:8px 14px;font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.6px;
   text-transform:uppercase;color:var(--text-dim);border-bottom:1px solid var(--border);
   background:rgba(255,255,255,0.015);
 }
-td{padding:10px 16px;color:var(--text-muted);border-bottom:1px solid rgba(255,255,255,0.025);vertical-align:middle;}
+td{padding:8px 14px;color:var(--text-muted);border-bottom:1px solid rgba(255,255,255,0.025);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:rgba(255,255,255,0.015);}
 td.td-pri{color:#fff;font-weight:600;}
-td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11.5px;}
+td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11px;}
 
 /* Status badges */
 .status-pill{
-  display:inline-block;padding:2px 7px;border-radius:var(--r-xs);font-size:9.5px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.4px;
+  display:inline-block;padding:2px 6px;border-radius:var(--r-xs);font-size:9px;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:0.4px;
 }
 .st-success{background:rgba(255,255,255,0.04);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.08);}
 .st-cached{background:rgba(14,165,233,0.1);color:var(--cyan);border:1px solid rgba(14,165,233,0.25);}
@@ -1206,9 +1239,9 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11.5px;}
 
 /* Toast */
 #toast{
-  position:fixed;bottom:24px;right:24px;z-index:999;padding:10px 16px;
-  border-radius:var(--r-sm);background:var(--panel);border:1px solid var(--border-strong);
-  font-size:12px;font-family:'JetBrains Mono',monospace;font-weight:600;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.6);
+  position:fixed;bottom:20px;right:20px;z-index:999;padding:8px 14px;
+  border-radius:var(--r-xs);background:var(--panel);border:1px solid var(--border-strong);
+  font-size:11.5px;font-family:'JetBrains Mono',monospace;font-weight:600;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,0.6);
   transform:translateY(12px);opacity:0;pointer-events:none;transition:all 0.15s cubic-bezier(0.16,1,0.3,1);
 }
 #toast.show{transform:translateY(0);opacity:1;}
@@ -1220,26 +1253,31 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11.5px;}
 <header class="topbar">
   <a class="brand" href="#">
     <div class="brand-glyph">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2L21 7.2V16.8L12 22L3 16.8V7.2L12 2Z" stroke="#60a5fa" stroke-width="1.8" stroke-linejoin="round"/>
-        <path d="M12 7L17 10V14.5L12 17.5L7 14.5V10L12 7Z" fill="#3b82f6" fill-opacity="0.25" stroke="#93c5fd" stroke-width="1.4" stroke-linejoin="round"/>
-        <circle cx="12" cy="12.2" r="2.2" fill="#60a5fa"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="12 2, 21.5 6.5, 21.5 17.5, 12 22, 2.5 17.5, 2.5 6.5" stroke="#3b82f6" stroke-width="1.6" stroke-linejoin="round" fill="rgba(37,99,235,0.08)"/>
+        <polygon points="12 6, 17.5 12, 12 18, 6.5 12" stroke="#60a5fa" stroke-width="1.2" stroke-dasharray="2 1" fill="none"/>
+        <line x1="12" y1="2" x2="12" y2="6" stroke="#93c5fd" stroke-width="1.4"/>
+        <line x1="12" y1="18" x2="12" y2="22" stroke="#93c5fd" stroke-width="1.4"/>
+        <line x1="2.5" y1="12" x2="6.5" y2="12" stroke="#93c5fd" stroke-width="1.4"/>
+        <line x1="17.5" y1="12" x2="21.5" y2="12" stroke="#93c5fd" stroke-width="1.4"/>
+        <circle cx="12" cy="12" r="2.5" fill="#60a5fa"/>
+        <circle cx="12" cy="12" r="1" fill="#ffffff"/>
       </svg>
     </div>
     <div class="brand-text-col">
       <div class="brand-title">NEXUS <span class="brand-subtext">GATEWAY</span></div>
-      <div class="brand-meta">PLATFORM MESH // v1.4</div>
+      <div class="brand-meta"><span class="meta-dot"></span>PLATFORM MESH // v1.4.2 &middot; US-EAST-1</div>
     </div>
   </a>
   <nav class="nav">
-    <button class="nav-tab active" id="tab-play" onclick="switchTab('play')">Playground</button>
-    <button class="nav-tab" id="tab-res" onclick="switchTab('res')">Resilience &amp; Chaos</button>
-    <button class="nav-tab" id="tab-tel" onclick="switchTab('tel')">Telemetry</button>
-    <button class="nav-tab" id="tab-logs" onclick="switchTab('logs')">Request Logs</button>
-    <button class="nav-tab" id="tab-ten" onclick="switchTab('ten')">Tenants</button>
+    <button class="nav-tab active" id="tab-play" onclick="switchTab('play')"><span class="tab-icon">⚡</span>Playground</button>
+    <button class="nav-tab" id="tab-res" onclick="switchTab('res')"><span class="tab-icon">🛡</span>Resilience &amp; Chaos</button>
+    <button class="nav-tab" id="tab-tel" onclick="switchTab('tel')"><span class="tab-icon">📊</span>Telemetry</button>
+    <button class="nav-tab" id="tab-logs" onclick="switchTab('logs')"><span class="tab-icon">📋</span>Request Logs</button>
+    <button class="nav-tab" id="tab-ten" onclick="switchTab('ten')"><span class="tab-icon">🔑</span>Tenants</button>
   </nav>
   <div class="top-right">
-    <div class="live-badge"><div class="live-dot"></div>SSE ACTIVE</div>
+    <div class="live-badge"><div class="live-dot"></div><span>SSE STREAM LIVE</span></div>
   </div>
 </header>
 
@@ -1251,22 +1289,33 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11.5px;}
       <!-- Left sidebar -->
       <aside class="sidebar-panel">
         <div class="side-block">
-          <div class="side-title">Mesh Telemetry</div>
-          <div class="metric-row"><span class="metric-label">P50 Latency</span><span class="metric-val" id="sb-p50">165ms</span></div>
-          <div class="metric-row"><span class="metric-label">P95 Latency</span><span class="metric-val" id="sb-p95">245ms</span></div>
-          <div class="metric-row"><span class="metric-label">P99 Latency</span><span class="metric-val" id="sb-p99">310ms</span></div>
+          <div class="side-title"><span>[01] MESH TELEMETRY</span><span class="side-badge">REALTIME</span></div>
+          <div class="metric-row"><span class="metric-label">P50 Latency</span><span class="metric-val" id="sb-p50">175ms</span></div>
+          <div class="metric-row"><span class="metric-label">P95 Latency</span><span class="metric-val" id="sb-p95">310ms</span></div>
+          <div class="metric-row"><span class="metric-label">P99 Latency</span><span class="metric-val" id="sb-p99">345ms</span></div>
           <div class="metric-row"><span class="metric-label">Cache Hit Ratio</span><span class="metric-val" id="sb-cache" style="color:var(--cyan)">16.7%</span></div>
           <div class="metric-row"><span class="metric-label">Cost Saved</span><span class="metric-val" id="sb-saved" style="color:var(--emerald)">$0.0126</span></div>
         </div>
         <div class="side-block" style="flex:1">
-          <div class="side-title">Provider Mesh Health</div>
+          <div class="side-title"><span>[02] PROVIDER MESH HEALTH</span><span class="side-badge">4 NODES</span></div>
           <div id="sb-providers">
             <!-- Populated by JS -->
           </div>
         </div>
-        <div class="side-block" style="background:rgba(99,102,241,0.03);">
-          <div style="font-size:11px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:4px;">Fallback Sequence</div>
-          <div style="font-size:12px;color:var(--text-muted);line-height:1.5;">OpenAI &rarr; Anthropic &rarr; Gemini &rarr; DeepSeek</div>
+        <div class="side-block fallback-sideblock">
+          <div class="fallback-hdr">
+            <span class="fallback-icon">🔀</span>
+            <span>[03] CASCADE ORDER</span>
+          </div>
+          <div class="fallback-chain-flow">
+            <span class="flow-node active">OpenAI</span>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node">Anthropic</span>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node">Gemini</span>
+            <span class="flow-arrow">&rarr;</span>
+            <span class="flow-node">DeepSeek</span>
+          </div>
         </div>
       </aside>
 
@@ -1274,9 +1323,9 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11.5px;}
       <div class="chat-center">
         <div class="chat-header">
           <div class="model-picker">
-            <span style="font-size:12px;font-weight:700;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.6px;">Primary:</span>
+            <span class="picker-lbl">Active Ingress:</span>
             <select class="select-input" id="model-select">
-              <option value="gpt-4o">OpenAI · GPT-4o</option>
+              <option value="gpt-4o">OpenAI · GPT-4o (Primary)</option>
               <option value="claude-3-5-sonnet">Anthropic · Claude 3.5 Sonnet</option>
               <option value="gemini-1.5-pro">Google · Gemini 1.5 Pro</option>
               <option value="deepseek-chat">DeepSeek · V3</option>
@@ -1301,45 +1350,50 @@ td.td-mono{font-family:'JetBrains Mono',monospace;font-size:11.5px;}
             <div class="bot-card">
               <div class="bot-header">
                 <div class="bot-identity">
-                  <span class="provider-badge">NEXUS CORE // MESH ACTIVE</span>
-                  <span class="tag-badge tag-direct">READY</span>
+                  <span class="provider-badge">NEXUS CORE // MESH ROUTER</span>
+                  <span class="tag-badge tag-direct">OPERATIONAL</span>
                 </div>
                 <div class="bot-telemetry-meta">
-                  <span>Tenant: tenant-default</span>
-                  <span>&middot;</span>
-                  <span>Isolation: TierEnterprise</span>
+                  <span><span class="meta-lbl">TENANT:</span> tenant-default</span>
+                  <span class="meta-sep">&middot;</span>
+                  <span><span class="meta-lbl">TIER:</span> Enterprise</span>
+                  <span class="meta-sep">&middot;</span>
+                  <span><span class="meta-lbl">SECURITY:</span> PII-Redact Active</span>
                 </div>
               </div>
-              <div class="bot-body">Production gateway active. Incoming prompts pass through token-bucket rate limiting, regex PII redaction, SHA-256 prompt deduplication, and automatic fallback cascades across OpenAI, Anthropic, Gemini, and DeepSeek.
+              <div class="bot-body">Gateway active on production mesh. Every prompt passes through token-bucket rate limits, zero-trust PII filtering, SHA-256 caching (1ms hit), and circuit-breaker cascades.
 
-All provider circuits are currently <strong>HEALTHY // CLOSED</strong>. Go to the <strong>Resilience &amp; Chaos</strong> tab and click <strong>'Simulate 429 Outage'</strong> on OpenAI to test automatic fallback cascade to Claude 3.5 Sonnet in real time!
-
-What would you like to explore?</div>
+All four provider nodes are <strong>HEALTHY // CLOSED</strong>. Click <strong>'Simulate 429 Outage'</strong> on OpenAI in the <strong>Resilience &amp; Chaos</strong> tab to watch live real-time failover to Claude 3.5 Sonnet.</div>
             </div>
           </div>
         </div>
 
-        <!-- Quick prompts bar -->
-        <div class="prompts-bar">
-          <button class="prompt-chip" onclick="setPrompt('Calculate 1337 * 42')"><span class="chip-cat">MATH</span>1337 &times; 42</button>
-          <button class="prompt-chip" onclick="setPrompt('Explain how circuit breakers work')"><span class="chip-cat">SYSTEMS</span>Circuit Breakers</button>
-          <button class="prompt-chip" onclick="setPrompt('Write a Go worker pool with waitgroups')"><span class="chip-cat">CONCURRENCY</span>Worker Pool</button>
-          <button class="prompt-chip" onclick="setPrompt('What is the capital of France?')"><span class="chip-cat">FACTUAL</span>Capital of France</button>
-          <button class="prompt-chip" onclick="setPrompt('Who is the richest man on earth?')"><span class="chip-cat">FACTUAL</span>Richest Person</button>
-          <button class="prompt-chip" onclick="setPrompt('Write a short love letter')"><span class="chip-cat">CREATIVE</span>Short Love Letter</button>
-          <button class="prompt-chip" onclick="setPrompt('Compare Go vs Python for backend systems')"><span class="chip-cat">BENCHMARK</span>Go vs Python</button>
-        </div>
-
-        <!-- Input Bar -->
-        <div class="chat-input-bar">
-          <div class="input-wrap">
-            <textarea class="text-area" id="prompt-input" placeholder="Type a prompt or query (e.g. explain circuit breakers, write a love letter, who is the richest man)..." rows="1" onkeydown="handleKey(event)"></textarea>
-            <div class="input-hint">
-              <span>Press <kbd style="background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:3px;">↵ Enter</kbd> to execute &middot; <kbd style="background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:3px;">Shift+↵</kbd> for newline</span>
-              <span id="route-indicator" style="color:var(--text-dim);">Route: Primary Tier 1 (GPT-4o)</span>
-            </div>
+        <!-- Integrated Command Dock -->
+        <div class="console-dock">
+          <div class="dock-quick-prompts">
+            <span class="dock-prompts-label">QUICK BENCHMARKS:</span>
+            <button class="prompt-chip" onclick="setPrompt('Calculate 1337 * 42')"><span class="chip-cat">MATH</span>1337 &times; 42</button>
+            <button class="prompt-chip" onclick="setPrompt('Explain how circuit breakers work')"><span class="chip-cat">SYS</span>Circuit Breakers</button>
+            <button class="prompt-chip" onclick="setPrompt('Write a Go worker pool with waitgroups')"><span class="chip-cat">CONC</span>Worker Pool</button>
+            <button class="prompt-chip" onclick="setPrompt('What is the capital of France?')"><span class="chip-cat">GEO</span>Capital of France</button>
+            <button class="prompt-chip" onclick="setPrompt('Who is the richest man on earth?')"><span class="chip-cat">FACT</span>Richest Man</button>
+            <button class="prompt-chip" onclick="setPrompt('Who is the richest footballer?')"><span class="chip-cat">FACT</span>Richest Footballer</button>
+            <button class="prompt-chip" onclick="setPrompt('Write a short love letter')"><span class="chip-cat">CREAT</span>Love Letter</button>
+            <button class="prompt-chip" onclick="setPrompt('Compare Go vs Python for backend systems')"><span class="chip-cat">BENCH</span>Go vs Python</button>
           </div>
-          <button class="send-btn" id="send-button" onclick="sendPrompt()">Execute</button>
+          <div class="dock-input-row">
+            <div class="input-wrap">
+              <textarea class="text-area" id="prompt-input" placeholder="Enter prompt or query (e.g. explain circuit breakers, who is the richest footballer)..." rows="1" onkeydown="handleKey(event)"></textarea>
+              <div class="input-hint">
+                <span>Press <kbd style="background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:2px;">↵ Enter</kbd> to execute &middot; <kbd style="background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:2px;">Shift+↵</kbd> multiline</span>
+                <span id="route-indicator" class="route-indicator-pill">ROUTE: PRIMARY TIER 1 (OpenAI · GPT-4o)</span>
+              </div>
+            </div>
+            <button class="send-btn" id="send-button" onclick="sendPrompt()">
+              <span>Execute</span>
+              <span class="btn-kbd">↵</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1350,34 +1404,34 @@ What would you like to explore?</div>
     <div class="resilience-view">
       <div>
         <h1 class="page-title">Resilience &amp; Fault Injection</h1>
-        <p class="page-desc">Test real-time upstream failure modes and automatic fallback cascades. Trip a circuit breaker on any provider to watch requests gracefully reroute to backup models without client downtime.</p>
+        <p class="page-desc">Simulate live upstream provider outages (HTTP 429 rate limits, timeouts) and observe automatic fallback cascades with zero client errors.</p>
       </div>
 
       <!-- Cascade Diagram -->
       <div class="cascade-diagram">
-        <div class="diag-title">Active Fallback Cascade Chain</div>
+        <div class="diag-title">Active Failover Cascade Pipeline</div>
         <div class="diag-nodes" id="cascade-nodes">
           <div class="diag-node" id="node-OpenAI">
             <span class="diag-node-name">OpenAI</span>
-            <span class="diag-node-role">Primary Tier &middot; GPT-4o</span>
+            <span class="diag-node-role">[01] PRIMARY &middot; GPT-4o</span>
             <span class="diag-node-badge state-closed" id="badge-OpenAI">CLOSED</span>
           </div>
           <div class="diag-arrow">&rarr;</div>
           <div class="diag-node" id="node-Anthropic">
             <span class="diag-node-name">Anthropic</span>
-            <span class="diag-node-role">Tier 2 &middot; Claude 3.5 Sonnet</span>
+            <span class="diag-node-role">[02] FALLBACK &middot; Claude 3.5 Sonnet</span>
             <span class="diag-node-badge state-closed" id="badge-Anthropic">CLOSED</span>
           </div>
           <div class="diag-arrow">&rarr;</div>
           <div class="diag-node" id="node-GoogleGemini">
             <span class="diag-node-name">Google Gemini</span>
-            <span class="diag-node-role">Tier 3 &middot; Gemini 1.5 Pro</span>
+            <span class="diag-node-role">[03] FALLBACK &middot; Gemini 1.5 Pro</span>
             <span class="diag-node-badge state-closed" id="badge-GoogleGemini">CLOSED</span>
           </div>
           <div class="diag-arrow">&rarr;</div>
           <div class="diag-node" id="node-DeepSeek">
             <span class="diag-node-name">DeepSeek</span>
-            <span class="diag-node-role">Tier 4 &middot; DeepSeek V3</span>
+            <span class="diag-node-role">[04] FALLBACK &middot; DeepSeek V3</span>
             <span class="diag-node-badge state-closed" id="badge-DeepSeek">CLOSED</span>
           </div>
         </div>
@@ -1537,7 +1591,7 @@ async function sendPrompt() {
   // Append user message
   const userMsg = document.createElement('div');
   userMsg.className = 'msg user';
-  userMsg.innerHTML = '<div class="msg-author">USER // CLIENT REQ</div><div class="bubble">' + esc(prompt) + '</div>';
+  userMsg.innerHTML = '<div class="user-meta">CLIENT PROMPT // TIER-1 INGRESS</div><div class="bubble">' + esc(prompt) + '</div>';
   thread.appendChild(userMsg);
   input.value = '';
   btn.disabled = true;
@@ -1639,11 +1693,11 @@ async function sendPrompt() {
       +      routeTag
       + '  </div>'
       + '  <div class="bot-telemetry-meta">'
-      + '    <span>' + resp.latency_ms + 'ms</span>'
-      + '    <span>&middot;</span>'
-      + '    <span>' + resp.total_tokens + ' toks</span>'
-      + '    <span>&middot;</span>'
-      + '    <span>$' + (resp.estimated_cost || 0).toFixed(4) + '</span>'
+      + '    <span><span class="meta-lbl">LAT</span> ' + resp.latency_ms + 'ms</span>'
+      + '    <span class="meta-sep">&middot;</span>'
+      + '    <span><span class="meta-lbl">TOK</span> ' + resp.total_tokens + ' toks</span>'
+      + '    <span class="meta-sep">&middot;</span>'
+      + '    <span><span class="meta-lbl">COST</span> $' + (resp.estimated_cost || 0).toFixed(4) + '</span>'
       + '  </div>'
       + '</div>'
       + alertHtml
@@ -1669,9 +1723,9 @@ async function refreshTelemetry() {
     const cb = await cbr.json();
     const tel = md.telemetry;
 
-    document.getElementById('sb-p50').innerText = (tel.p50_latency_ms || 165) + 'ms';
-    document.getElementById('sb-p95').innerText = (tel.p95_latency_ms || 580) + 'ms';
-    document.getElementById('sb-p99').innerText = (tel.p99_latency_ms || 890) + 'ms';
+    document.getElementById('sb-p50').innerText = (tel.p50_latency_ms || 175) + 'ms';
+    document.getElementById('sb-p95').innerText = (tel.p95_latency_ms || 310) + 'ms';
+    document.getElementById('sb-p99').innerText = (tel.p99_latency_ms || 345) + 'ms';
     document.getElementById('sb-cache').innerText = (md.hit_ratio || 16.7).toFixed(1) + '%';
     document.getElementById('sb-saved').innerText = '$' + (tel.total_saved_usd || 0.0126).toFixed(4);
 
@@ -1680,13 +1734,19 @@ async function refreshTelemetry() {
         const isClosed = b.state === 'CLOSED';
         const isHalf = b.state === 'HALF-OPEN';
         const cls = isClosed ? 'pill-closed' : (isHalf ? 'pill-half' : 'pill-open');
-        const stateLabel = isClosed ? 'HEALTHY' : (isHalf ? 'PROBING' : 'TRIPPED');
-        return '<div class="provider-pill">'
-          + '  <div>'
-          + '    <div class="pill-name">' + esc(b.name) + '</div>'
-          + '    <div style="font-size:10px;font-family:\'JetBrains Mono\',monospace;color:var(--text-muted);">' + b.last_latency_ms + 'ms &middot; ' + b.success_rate_pct.toFixed(1) + '%</div>'
+        const stateLabel = isClosed ? 'HEALTHY // CLOSED' : (isHalf ? 'PROBING' : 'TRIPPED (429)');
+        return '<div class="provider-pill ' + (isClosed ? '' : 'pill-active-alert') + '">'
+          + '  <div class="pill-top">'
+          + '    <span class="pill-name">' + esc(b.name) + '</span>'
+          + '    <span class="pill-status ' + cls + '">' + stateLabel + '</span>'
           + '  </div>'
-          + '  <span class="pill-status ' + cls + '">' + stateLabel + '</span>'
+          + '  <div class="pill-metrics">'
+          + '    <span class="pm-item"><span class="pm-lbl">LAT</span><span class="pm-val">' + b.last_latency_ms + 'ms</span></span>'
+          + '    <span class="pm-sep">&middot;</span>'
+          + '    <span class="pm-item"><span class="pm-lbl">SR</span><span class="pm-val">' + b.success_rate_pct.toFixed(1) + '%</span></span>'
+          + '    <span class="pm-sep">&middot;</span>'
+          + '    <span class="pm-item"><span class="pm-lbl">REQS</span><span class="pm-val">' + b.total_requests + '</span></span>'
+          + '  </div>'
           + '</div>';
       }).join('');
     }
@@ -1813,9 +1873,9 @@ async function loadTelemetry() {
     document.getElementById('tel-toks').innerText = (tel.total_tokens || 14820).toLocaleString();
     document.getElementById('tel-cost').innerText = '$' + (tel.total_cost_usd || 0.0842).toFixed(4);
     document.getElementById('tel-saved').innerText = '$' + (tel.total_saved_usd || 0.0126).toFixed(4);
-    document.getElementById('tel-p50').innerText = tel.p50_latency_ms || 165;
-    document.getElementById('tel-p95').innerText = tel.p95_latency_ms || 580;
-    document.getElementById('tel-p99').innerText = tel.p99_latency_ms || 890;
+    document.getElementById('tel-p50').innerText = tel.p50_latency_ms || 175;
+    document.getElementById('tel-p95').innerText = tel.p95_latency_ms || 310;
+    document.getElementById('tel-p99').innerText = tel.p99_latency_ms || 345;
 
     const logs = (tel.recent_logs || []).slice(0, 16).reverse();
     const barsContainer = document.getElementById('latency-bars');
