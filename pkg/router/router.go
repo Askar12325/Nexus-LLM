@@ -693,24 +693,16 @@ func routeToHandler(lower, original string) string {
 		return "Nexus Gateway provides high-availability LLM infrastructure:\n\n• Multi-provider routing: OpenAI (GPT-4o), Anthropic (Claude 3.5), Google (Gemini 1.5), DeepSeek (V3)\n• Automatic failover: immediate cascade to backup models when an upstream encounters a 429 rate limit or timeout\n• SHA-256 prompt caching: 1ms instant responses with zero upstream token spend\n• Zero-trust PII redaction: regex-based filtering of sensitive emails, API keys, and credentials\n• Live Prometheus & SSE telemetry: P50/P95/P99 latency histograms and live circuit state events"
 	}
 
-	// Wealth, Billionaires & Figures
-	if (strings.Contains(lower, "richest") || strings.Contains(lower, "wealthiest")) &&
-		(strings.Contains(lower, "man") || strings.Contains(lower, "person") || strings.Contains(lower, "people") || strings.Contains(lower, "earth") || strings.Contains(lower, "world") || strings.Contains(lower, "alive") || strings.Contains(lower, "who")) {
-		return richestPersonAnswer()
-	}
-	if strings.Contains(lower, "net worth") && (strings.Contains(lower, "elon") || strings.Contains(lower, "musk")) {
-		return "Elon Musk's net worth is estimated between $220 billion and $250+ billion, primarily derived from his ownership stakes in Tesla and SpaceX."
-	}
-	if strings.Contains(lower, "net worth") && (strings.Contains(lower, "bezos") || strings.Contains(lower, "jeff")) {
-		return "Jeff Bezos's net worth is estimated around $190 billion to $210 billion, primarily derived from his Amazon holdings."
+	// Wealth, Net Worth & Rankings
+	if strings.Contains(lower, "richest") || strings.Contains(lower, "wealthiest") || strings.Contains(lower, "net worth") || strings.Contains(lower, "billionaire") {
+		if ans := handleWealthQuery(lower, original); ans != "" {
+			return ans
+		}
 	}
 
-	// World Leaders
-	if strings.Contains(lower, "president") && (strings.Contains(lower, "united states") || strings.Contains(lower, "us") || strings.Contains(lower, "america") || strings.Contains(lower, "current")) {
-		return "The President of the United States is Joe Biden (the 46th president)."
-	}
-	if strings.Contains(lower, "prime minister") && (strings.Contains(lower, "uk") || strings.Contains(lower, "united kingdom") || strings.Contains(lower, "britain")) {
-		return "The Prime Minister of the United Kingdom is Keir Starmer."
+	// World Leaders & Heads of State
+	if ans := handleWorldLeaderQuery(lower); ans != "" {
+		return ans
 	}
 
 	// Science, Physics & Nature
@@ -859,6 +851,203 @@ Forever yours`
 
 func richestPersonAnswer() string {
 	return "Elon Musk (CEO of Tesla, SpaceX, and xAI) is generally recognized as the richest person on Earth, with an estimated net worth typically fluctuating between $220 billion and $250+ billion depending on equity valuations. The top spot frequently alternates with Bernard Arnault (chairman of LVMH luxury group) and Jeff Bezos (founder of Amazon)."
+}
+
+func handleWealthQuery(lower, original string) string {
+	// 1. Football / Soccer
+	if strings.Contains(lower, "football") || strings.Contains(lower, "soccer") {
+		return "Cristiano Ronaldo is widely recognized as the wealthiest active professional footballer by career earnings and commercial endorsements (with an estimated net worth between $600 million and $800+ million, bolstered by his contract with Al Nassr and lifetime commercial partnerships), followed closely by Lionel Messi (estimated at ~$600 million).\n\nIn terms of total familial net worth, Faiq Bolkiah (a professional footballer and nephew of the Sultan of Brunei) is technically considered the richest footballer in the world, with family wealth estimated at over $20 billion."
+	}
+
+	// 2. Basketball
+	if strings.Contains(lower, "basketball") || strings.Contains(lower, "nba") {
+		return "Michael Jordan is the richest basketball player in history, with an estimated net worth of $3 billion to $3.5 billion primarily from his Nike Jordan Brand royalties and the sale of his majority stake in the Charlotte Hornets. LeBron James is the first active NBA player to achieve billionaire status, with an estimated net worth around $1.2 billion."
+	}
+
+	// 3. Athletes / General Sports
+	if strings.Contains(lower, "athlete") || strings.Contains(lower, "sportsperson") || strings.Contains(lower, "sportsman") || strings.Contains(lower, "in sports") || strings.Contains(lower, "sports player") {
+		return "Michael Jordan is widely recognized as the richest athlete of all time, with an estimated net worth of approximately $3 billion to $3.5 billion, built through his enduring Nike Jordan Brand royalties and the sale of his majority stake in the Charlotte Hornets. Among active competitors, Cristiano Ronaldo and Lionel Messi lead active athletes, while Faiq Bolkiah holds the highest familial net worth."
+	}
+
+	// 4. Women
+	if strings.Contains(lower, "woman") || strings.Contains(lower, "female") {
+		return "Françoise Bettencourt Meyers (heiress to the L'Oréal cosmetics empire) and Alice Walton (heiress to the Walmart fortune) regularly hold the title of richest woman on Earth, each with estimated net worths typically fluctuating between $70 billion and $100+ billion depending on public equity markets."
+	}
+
+	// 5. Musicians / Singers / Rappers
+	if strings.Contains(lower, "musician") || strings.Contains(lower, "singer") || strings.Contains(lower, "rapper") || strings.Contains(lower, "hip hop") || strings.Contains(lower, "band") {
+		return "Jay-Z (Shawn Carter) is recognized as the wealthiest musician and hip-hop artist, with an estimated net worth of over $2.5 billion from his music catalog, Armand de Brignac champagne, D'USSÉ cognac, and Roc Nation venture investments, alongside figures like Rihanna ($1.4 billion) and Taylor Swift ($1+ billion)."
+	}
+
+	// 6. Actors / Entertainment
+	if strings.Contains(lower, "actor") || strings.Contains(lower, "actress") || strings.Contains(lower, "hollywood") {
+		return "Tyler Perry (estimated at $1 billion to $1.4 billion via ownership of Tyler Perry Studios) and Jerry Seinfeld (approximately $1 billion via Seinfeld syndication) rank among the wealthiest actors and entertainment creators."
+	}
+
+	// 7. Sports Clubs / Franchises
+	if strings.Contains(lower, "club") || strings.Contains(lower, "franchise") || (strings.Contains(lower, "team") && !strings.Contains(lower, "steam")) {
+		return "Real Madrid and Manchester City consistently rank as the highest-revenue football clubs in the world according to the Deloitte Football Money League. Across all sports franchises, the Dallas Cowboys (NFL) rank as the most valuable sports team in the world, valued at over $9 billion."
+	}
+
+	// 8. Countries / Nations
+	if strings.Contains(lower, "country") || strings.Contains(lower, "nation") {
+		return "By GDP per capita (purchasing power parity), Luxembourg, Singapore, and Qatar consistently rank as the richest nations in the world. By aggregate total national wealth and nominal GDP, the United States holds the largest share of global wealth, followed by China."
+	}
+
+	// 9. Specific Individuals
+	if strings.Contains(lower, "elon") || strings.Contains(lower, "musk") {
+		return "Elon Musk's net worth is estimated between $220 billion and $250+ billion, primarily derived from his ownership stakes in Tesla, SpaceX, and xAI."
+	}
+	if strings.Contains(lower, "bezos") || strings.Contains(lower, "jeff") {
+		return "Jeff Bezos's net worth is estimated around $190 billion to $210 billion, primarily derived from his Amazon holdings."
+	}
+	if strings.Contains(lower, "arnault") || strings.Contains(lower, "bernard") {
+		return "Bernard Arnault (chairman and CEO of LVMH) has an estimated net worth between $180 billion and $210 billion, derived from his family's controlling stake in luxury conglomerate LVMH."
+	}
+	if strings.Contains(lower, "zuckerberg") || strings.Contains(lower, "mark") {
+		return "Mark Zuckerberg's net worth is estimated around $170 billion to $200 billion, primarily derived from his Meta ownership stake."
+	}
+	if strings.Contains(lower, "gates") || strings.Contains(lower, "bill") {
+		return "Bill Gates's net worth is estimated around $110 billion to $130 billion, held across Cascade Investment, Microsoft equity, and philanthropic assets."
+	}
+	if strings.Contains(lower, "buffett") || strings.Contains(lower, "warren") {
+		return "Warren Buffett's net worth is estimated around $130 billion to $145 billion, held through Berkshire Hathaway class A shares."
+	}
+	if strings.Contains(lower, "ronaldo") || strings.Contains(lower, "cristiano") {
+		return "Cristiano Ronaldo's net worth is estimated between $600 million and $800+ million, boosted by his contract with Al Nassr and lifetime Nike partnership."
+	}
+	if strings.Contains(lower, "messi") || strings.Contains(lower, "lionel") {
+		return "Lionel Messi's net worth is estimated between $600 million and $650 million."
+	}
+
+	// 10. General Richest Person / Man on Earth
+	isOverall := strings.Contains(lower, "man on earth") ||
+		strings.Contains(lower, "person on earth") ||
+		strings.Contains(lower, "man in the world") ||
+		strings.Contains(lower, "person in the world") ||
+		strings.Contains(lower, "people on earth") ||
+		strings.Contains(lower, "richest man") ||
+		strings.Contains(lower, "richest person") ||
+		strings.Contains(lower, "richest human") ||
+		strings.Contains(lower, "richest guy") ||
+		strings.Contains(lower, "richest alive") ||
+		strings.Contains(lower, "wealthiest man") ||
+		strings.Contains(lower, "wealthiest person") ||
+		strings.Contains(lower, "wealthiest human") ||
+		strings.Contains(lower, "richest on earth") ||
+		strings.Contains(lower, "richest in the world") ||
+		lower == "who is the richest" || lower == "who is the richest?" ||
+		lower == "who is the wealthiest" || lower == "who is the wealthiest?"
+
+	if isOverall {
+		return richestPersonAnswer()
+	}
+
+	// 11. Specific profession/category fallback: extract target subject if asked "who is the richest [X]"
+	re := regexp.MustCompile(`(?i)(?:who\s+is\s+the\s+)?(?:richest|wealthiest)\s+([a-zA-Z\s]+?)(?:\s+in\s+the\s+world|\s+on\s+earth|\?)?$`)
+	matches := re.FindStringSubmatch(lower)
+	if len(matches) > 1 {
+		target := strings.TrimSpace(matches[1])
+		target = strings.TrimSuffix(target, "?")
+		if target != "" && target != "person" && target != "man" && target != "one" {
+			return fmt.Sprintf("I do not have verified, up-to-date net worth rankings for %q in the local offline database. Specialized net worth figures fluctuate frequently based on private asset evaluations and corporate filings, and the gateway does not substitute unrelated figures.", target)
+		}
+	}
+
+	return ""
+}
+
+func handleWorldLeaderQuery(lower string) string {
+	if !strings.Contains(lower, "president") && !strings.Contains(lower, "prime minister") && !strings.Contains(lower, "chancellor") && !strings.Contains(lower, "leader") {
+		return ""
+	}
+
+	// United States
+	if strings.Contains(lower, "united states") || strings.Contains(lower, "usa") || strings.Contains(lower, "america") || lower == "who is the president" || lower == "who is the president?" || lower == "who is the current president" || lower == "who is the current president?" {
+		return "The President of the United States is Joe Biden (the 46th president)."
+	}
+
+	// United Kingdom
+	if strings.Contains(lower, "uk") || strings.Contains(lower, "united kingdom") || strings.Contains(lower, "britain") || strings.Contains(lower, "british") {
+		return "The Prime Minister of the United Kingdom is Keir Starmer."
+	}
+
+	// France
+	if strings.Contains(lower, "france") || strings.Contains(lower, "french") {
+		return "The President of France is Emmanuel Macron."
+	}
+
+	// Germany
+	if strings.Contains(lower, "germany") || strings.Contains(lower, "german") {
+		return "The Chancellor of Germany is Olaf Scholz (with Frank-Walter Steinmeier serving as Federal President)."
+	}
+
+	// Canada
+	if strings.Contains(lower, "canada") || strings.Contains(lower, "canadian") {
+		return "The Prime Minister of Canada is Justin Trudeau."
+	}
+
+	// India
+	if strings.Contains(lower, "india") || strings.Contains(lower, "indian") {
+		return "The Prime Minister of India is Narendra Modi, and the President of India is Droupadi Murmu."
+	}
+
+	// Nigeria
+	if strings.Contains(lower, "nigeria") || strings.Contains(lower, "nigerian") {
+		return "The President of Nigeria is Bola Ahmed Tinubu."
+	}
+
+	// Kenya
+	if strings.Contains(lower, "kenya") || strings.Contains(lower, "kenyan") {
+		return "The President of Kenya is William Ruto."
+	}
+
+	// South Africa
+	if strings.Contains(lower, "south africa") {
+		return "The President of South Africa is Cyril Ramaphosa."
+	}
+
+	// Brazil
+	if strings.Contains(lower, "brazil") || strings.Contains(lower, "brazilian") {
+		return "The President of Brazil is Luiz Inácio Lula da Silva."
+	}
+
+	// Ukraine
+	if strings.Contains(lower, "ukraine") || strings.Contains(lower, "ukrainian") {
+		return "The President of Ukraine is Volodymyr Zelenskyy."
+	}
+
+	// Russia
+	if strings.Contains(lower, "russia") || strings.Contains(lower, "russian") {
+		return "The President of Russia is Vladimir Putin."
+	}
+
+	// China
+	if strings.Contains(lower, "china") || strings.Contains(lower, "chinese") {
+		return "The President of the People's Republic of China is Xi Jinping."
+	}
+
+	// Japan
+	if strings.Contains(lower, "japan") || strings.Contains(lower, "japanese") {
+		return "The Prime Minister of Japan is Shigeru Ishiba."
+	}
+
+	// Australia
+	if strings.Contains(lower, "australia") || strings.Contains(lower, "australian") {
+		return "The Prime Minister of Australia is Anthony Albanese."
+	}
+
+	// If asked about leader/president of an unrecognized country:
+	re := regexp.MustCompile(`(?i)(?:who\s+is\s+the\s+)?(?:president|prime\s+minister|chancellor|leader)\s+of\s+([a-zA-Z\s]+)`)
+	m := re.FindStringSubmatch(lower)
+	if len(m) > 1 {
+		country := strings.TrimSpace(strings.TrimSuffix(m[1], "?"))
+		if country != "" {
+			return fmt.Sprintf("I do not have verified up-to-date political leadership records for %q in the local offline database.", strings.Title(country))
+		}
+	}
+
+	return ""
 }
 
 func generatePoem(prompt string) string {
@@ -1248,6 +1437,14 @@ func getCapitalAnswer(lower string) string {
 	for _, e := range table {
 		if strings.Contains(lower, e.country) {
 			return fmt.Sprintf("The capital of %s is %s.", e.display, e.capital)
+		}
+	}
+	re := regexp.MustCompile(`(?i)(?:what\s+is\s+the\s+)?capital\s+(?:city\s+)?of\s+([a-zA-Z\s]+)`)
+	m := re.FindStringSubmatch(lower)
+	if len(m) > 1 {
+		country := strings.TrimSpace(strings.TrimSuffix(m[1], "?"))
+		if country != "" && country != "a country" && country != "the country" {
+			return fmt.Sprintf("I do not have the capital of %q stored in the local offline database. Please consult an updated geographical reference.", strings.Title(country))
 		}
 	}
 	return "Which country? Give me the name and I'll tell you the capital."
